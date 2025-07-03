@@ -1,0 +1,16 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profilo</title>
+</head>
+<body>
+    {% include 'components/navbar.html' %}
+
+    <div class="profile-container" id="profile-container"></div>
+
+    <script src="{% static 'js/profile_section/profile.js' %}"></script>
+</body>
+</html>

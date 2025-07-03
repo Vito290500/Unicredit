@@ -1,0 +1,30 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PFH – Dashboard</title>
+  <link rel="icon" href="{% static 'image/iconaWeb.png' %}" type="image/png">
+
+  <!-- Import CSS -->
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/componenti.css' %}">
+
+  <!-- Import JS -->
+
+
+</head>
+<body>
+  {% include 'components/navbar.html' %}
+  
+
+
+  <!-- Import CDN end of body -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Import JS end of body -->
+  <script src="{% static 'js/dashboard.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+"""
+Email customization 
+"""
+from djoser import email as djoser_email
+from djoser import utils
+from djoser.conf import settings as djoser_settings
+from django.contrib.auth.tokens import default_token_generator
+
+class ActivationEmail(djoser_email.ActivationEmail):
+    """Class for handling Activation email customization."""
+
+    template_name = 'users/activation.html'
+
+    def get_context_data(self):
+        """Function that handling email context."""
+        
+        context = super().get_context_data()
+        user = context['user']
+        context['uid']   = utils.encode_uid(user.pk)
+        context['token'] = default_token_generator.make_token(user)
+        context['url'] = context.get('url')
+        return context

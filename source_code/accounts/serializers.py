@@ -33,7 +33,8 @@ class AccountSerializer(serializers.ModelSerializer):
 
 class AccountWithProfileSerializer(AccountSerializer):
     """Class that handling account with profile data."""
-    profile = ProfileSerializer(read_only=True)
+    profile = ProfileSerializer(read_only=False)
+    email = serializers.EmailField(source="user.email", read_only=True)
 
     class Meta:
         model = Accounts
@@ -45,4 +46,15 @@ class AccountWithProfileSerializer(AccountSerializer):
             "currency",
             "created_at",
             "profile",
+            "email",
         ]
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile', None)
+        instance = super().update(instance, validated_data)
+        if profile_data:
+            profile = instance.profile
+            for attr, value in profile_data.items():
+                setattr(profile, attr, value)
+            profile.save()
+        return instance

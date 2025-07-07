@@ -5,6 +5,7 @@
 :root {
   --bacground-contrast: #ffffff;
   --gray-100: #f4f6f8; 
+  --gray-400: #676767; 
   --gray-900: #333333; 
 
   --blue-50:  #e6f4ff;
@@ -30,7 +31,12 @@
   --font-body:    'Roboto', sans-serif;
 }
 
-
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+}
+p{
+    font-family: var(--font-body);
+}
 
 /* NAVBAR STYLE */
 .navbar {

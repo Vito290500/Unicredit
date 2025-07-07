@@ -144,15 +144,23 @@ DJOSER = {
 
     "ACTIVATION_URL": "activate/{uid}/{token}/",
 
+    "SEND_RESET_PASSWORD_EMAIL": True,
+    "PASSWORD_RESET_CONFIRM_URL": "reset-password-confirm/{uid}/{token}/",
+
     "DOMAIN": "localhost:8000",
     "SITE_NAME": "FinHub Credit Bank",
 
+    "EMAIL": {
+        "password_reset": "users.email.ResetPasswordEmail",
+    },
+    
     "PERMISSIONS": {
         "activation": ["rest_framework.permissions.AllowAny"],
     },
 
     "SERIALIZERS": {
-        "user_create": "users.serializers.CustomUserCreateSerializer", 
+        "user_create": "users.serializers.CustomUserCreateSerializer",
+        "token_create": "users.serializers.CustomTokenCreateSerializer",
     },
 }
 

@@ -58,14 +58,10 @@ document.addEventListener('DOMContentLoaded', () => {
           passErr.style.display = 'block';
           passInput.parentElement.classList.add('error');
         }
-
-        else if (resp.status === 401
-              && data.detail
-              && data.detail.toLowerCase().includes('no active account')) {
-          globalErr.textContent = 'Account non attivo: controlla la tua email per l’attivazione.';
+        else if (resp.status === 401 && data.detail) {
+          globalErr.textContent = data.detail;
           globalErr.style.display = 'block';
         }
-  
         else {
           globalErr.textContent = data.detail || 'Credenziali non valide';
           globalErr.style.display = 'block';

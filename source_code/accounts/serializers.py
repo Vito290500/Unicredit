@@ -2,7 +2,7 @@
 Serializers for accounts app
 """
 from rest_framework import serializers
-from .models import Accounts, Profile
+from .models import Accounts, Profile, BankAccount, Card
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -58,3 +58,18 @@ class AccountWithProfileSerializer(AccountSerializer):
                 setattr(profile, attr, value)
             profile.save()
         return instance
+
+
+class BankAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BankAccount
+        fields = [
+            "id", "iban", "name", "balance", "currency", "opened_at"
+        ]
+
+class CardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Card
+        fields = [
+            "id", "circuit", "pan_last4", "pan_hash", "expiry_month", "expiry_year", "cvv_hash", "holder_name", "active"
+        ]

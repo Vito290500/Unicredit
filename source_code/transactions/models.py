@@ -3,7 +3,7 @@ Transaction model configuration.
 """
 import uuid
 from django.db import models
-from accounts.models import Accounts
+from accounts.models import BankAccount
 
 class Category(models.Model):
     """Class that handling category model."""
@@ -17,7 +17,7 @@ class Transaction(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
     account = models.ForeignKey(
-        Accounts,
+        BankAccount,
         on_delete=models.CASCADE,
         related_name="transactions"
     )

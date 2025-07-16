@@ -13,21 +13,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         } 
         const data = await resp.json();
         
-        /* INJECT DATA IN INPUT FIELDS */
         const usernameField = document.getElementById('username-field');
         const phoneField = document.getElementById('phone-field');
         const passwordField = document.getElementById('password-field');
        
         usernameField.value = data.email;
         phoneField.value = data.profile.phone_number;
-        passwordField.value = '********'; // non mostrare mai la password reale
-        
-        // --- EMAIL ---
+        passwordField.value = '********'; 
+
         const editEmailBtn = document.getElementById('edit-email-btn');
         const cancelEmailBtn = document.getElementById('cancel-email-btn');
         let originalEmail = usernameField.value;
 
-        // --- MODALE DI CONFERMA EMAIL ---
         function showEmailConfirmModal(onConfirm) {
             let modal = document.getElementById('email-confirm-modal');
             if (!modal) {
@@ -60,7 +57,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 editEmailBtn.textContent = 'salva';
                 cancelEmailBtn.style.display = 'inline-block';
             } else {
-                // Mostra modale di conferma
+
                 showEmailConfirmModal(async (modal) => {
                     const newEmail = usernameField.value;
                     try {
@@ -75,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         });
                         if (!resp.ok) throw new Error('Errore salvataggio');
                         const respData = await resp.json();
-                        // Mostra codice monouso con stile e funzioni avanzate
+
                         const codeDiv = document.getElementById('modal-recovery-code');
                         codeDiv.style.display = 'block';
                         codeDiv.innerHTML = `
@@ -88,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div id="copy-success-msg" class="copy-success" style="display:none;">Copiato!</div>
                             <div style="margin-top:0.7rem;font-size:0.95em;color:#888;">Verrai reindirizzato al login tra <span id="recovery-timer">15</span> secondi.</div>
                         `;
-                        // Copia automatica
+ 
                         const codeText = respData.recovery_code || '';
                         if (codeText) {
                             try {
@@ -96,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 document.getElementById('copy-success-msg').style.display = 'block';
                             } catch {}
                         }
-                        // Bottone copia
+
                         document.getElementById('copy-recovery-btn').onclick = async () => {
                             try {
                                 await navigator.clipboard.writeText(codeText);
@@ -106,12 +103,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 }, 1200);
                             } catch {}
                         };
-                        // Bottone OK
+
                         document.getElementById('ok-recovery-btn').onclick = () => {
                             localStorage.removeItem('accessToken');
                             window.location.href = '/';
                         };
-                        // Timer
+
                         let seconds = 15;
                         const timerSpan = document.getElementById('recovery-timer');
                         const timer = setInterval(() => {
@@ -138,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             cancelEmailBtn.style.display = 'none';
         });
 
-        // --- TELEFONO ---
+
         const editPhoneBtn = document.getElementById('edit-phone-btn');
         const cancelPhoneBtn = document.getElementById('cancel-phone-btn');
         let originalPhone = phoneField.value;
@@ -150,7 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 editPhoneBtn.textContent = 'salva';
                 cancelPhoneBtn.style.display = 'inline-block';
             } else {
-                // Salva: invia richiesta PATCH con struttura corretta
+
                 const newPhone = phoneField.value;
                 try {
                     const resp = await fetch('/api/accounts/me/', {
@@ -182,13 +179,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             cancelPhoneBtn.style.display = 'none';
         });
 
-        // --- PASSWORD ---
+
         const editPasswordBtn = document.getElementById('edit-password-btn');
         const passwordMsg = document.getElementById('password-msg');
 
         editPasswordBtn.addEventListener('click', async function() {
-            // Invia richiesta reset password (come da login)
-            // ATTENZIONE: verifica che l'endpoint sia corretto (es: /auth/users/reset_password/ o /auth/password/reset/)
+
             try {
                 const resp = await fetch('/api/users/reset_password/', {
                     method: 'POST',

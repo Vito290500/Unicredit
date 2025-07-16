@@ -1,0 +1,185 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Bonifico - FinHub</title>
+  <link rel="icon" href="{% static 'image/iconaWeb.png' %}" type="image/png">
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/componenti.css' %}">
+  <link rel="stylesheet" href="{% static 'css/bonifico.css' %}">
+</head>
+
+<body>
+    {% include 'components/navbar.html' %}
+
+    <div class="header-container">
+
+        <div class="title-container-header">
+
+            <div class="img-circle-container">
+                <img src="{% static 'image/operazioni/bonificoSepa.png' %}" alt="User">
+            </div>
+            
+            <h3>Bonifico SEPA</h3>
+        </div>
+
+        <div class="menu-trace">
+            <a href="{% url 'homepage' %}">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                    <path d="M3 10.29L12 3l9 7.29V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1v-9.71z"/>
+                </svg>
+            </a>
+            <p class="arrow-right">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                    <path d="M8 4l8 8-8 8V4z"/>
+                </svg>
+            </p>
+            <p class="subtitle-menu-trace">Avvio Bonifico</p>
+        </div>
+    </div>
+
+    
+
+    <div class="main-container">
+      <form id="bonifico-form">
+
+        <div class="header-title-container">
+            <h3 class="main-title">Controlla e completa i dati del form</h3>
+            <button type="button" id="rubrica-btn" class="rubrica-btn">Rubrica</button>
+        </div>
+        
+
+
+        <div class="container-dati-utenti">
+            <div class="container-dati-mittente">
+                <h3>Dati del mittente</h3>
+                <div class="container-dati-mittente-content">
+                
+                        <div class="celle-dati">
+                            <p class="celle-dati-title">Nome entità / persona</p>
+                            <input class="celle-dati-value" name="mittente-nome">
+                        </div>
+
+                        <div class="celle-dati">
+                            <p class="celle-dati-title">Email:</p>
+                            <input class="celle-dati-value" name="mittente-email">
+                        </div>
+
+                        <div class="celle-dati">
+                            <p class="celle-dati-title">IBAN:</p>
+                            <input class="celle-dati-value" name="mittente-iban">
+                        </div>
+
+                        <div class="celle-dati">
+                            <p class="celle-dati-title">Città di residenza:</p>
+                            <input class="celle-dati-value" name="mittente-citta">
+                        </div>
+                        
+                </div>
+            </div>
+
+            <div class="container-dati-destinatario">
+                <h3>Dati del destinatario</h3>
+                <div class="container-dati-destinatario-content">
+                    <div class="container-dati-destinatario-content-item">
+                        <div class="celle-dati">
+                            <p class="celle-dati-title">Nome entità / persona:</p>
+                            <input class="celle-dati-value" placeholder="Inserisci il nome o entità">
+                        </div>
+
+                        <div class="celle-dati">
+                            <p class="celle-dati-title">Email:</p>
+                            <input class="celle-dati-value" placeholder="Inserisci l'email">
+                        </div>
+
+                        <div class="celle-dati">
+                            <p class="celle-dati-title">IBAN:</p>
+                            <input class="celle-dati-value" placeholder="Inserisci l'IBAN">
+                        </div>
+
+                        <div class="celle-dati">
+                            <p class="celle-dati-title">Città di residenza:</p>
+                            <input class="celle-dati-value" placeholder="Inserisci la città di residenza">
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="other-spec">
+            <h3>Altre specifiche</h3>
+            <div class="celle-dati">
+                <p class="celle-dati-title">Clausola:</p>
+                <input class="celle-dati-value" placeholder="Inserisci qui una motivazione">
+            </div>
+
+            <div class="celle-dati">
+                <p class="celle-dati-title">Importo:</p>
+                <input class="celle-dati-value" placeholder="Inserisci l'importo">
+            </div>
+
+            <div class="celle-dati">
+                <p class="celle-dati-title">Nota:</p>
+                <input class="celle-dati-value" placeholder="Scrivi qui una nota testuale">
+            </div>
+            <div class="celle-dati">
+                <p class="celle-dati-title">Categoria:</p>
+                <input class="celle-dati-value" placeholder="Scrivi qui la categoria">
+            </div>
+        </div>
+
+        <div class="container-button"> 
+            <button type="submit">Invia bonifico</button>
+            
+        </div>
+      </form>
+    </div>
+
+    {% include 'components/footer.html' %}
+
+    <!-- Modale PIN per autorizzazione bonifico -->
+    <div id="pin-modal" class="modal-pin" style="display:none;">
+      <div class="modal-content-pin">
+        <div id="pin-loader" class="pin-loader" style="display:none;"></div>
+        <h3 id="pin-modal-title">Transizione iniziata</h3>
+        <p id="pin-modal-message">Inserisci il PIN per autorizzare il bonifico</p>
+        <input type="password" id="pin-input" maxlength="6" placeholder="PIN" autocomplete="off" class="pin-input">
+        <button id="pin-confirm-btn" class="pin-btn">Autorizza</button>
+        <button id="pin-cancel-btn" class="pin-btn pin-cancel">Annulla</button>
+        <div id="pin-error" class="pin-error"></div>
+      </div>
+    </div>
+
+    <!-- Modale successo bonifico -->
+    <div id="success-modal" class="modal-pin" style="display:none;">
+      <div class="modal-content-pin">
+        <h3 class="success-title">Bonifico avvenuto correttamente</h3>
+        <div class="success-icon-animated">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="32" cy="32" r="30" stroke="#4BB543" stroke-width="4" fill="#eafaf1"/>
+            <path d="M20 34L29 43L46 26" stroke="#4BB543" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="success-actions">
+          <button id="view-receipt-btn" class="pin-btn">View receipt transaction</button>
+          <button id="save-contact-btn" class="pin-btn">Salva l'utente in rubrica</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modale rubrica destinatari (verrà popolata via JS) -->
+    <div id="rubrica-modal" class="modal-pin" style="display:none;">
+      <div class="modal-content-pin">
+        <h3>Rubrica destinatari</h3>
+        <div id="rubrica-list" class="rubrica-list"></div>
+        <button id="rubrica-close-btn" class="pin-btn pin-cancel">Chiudi</button>
+      </div>
+    </div>
+
+  <script src="{% static 'js/bonifico.js' %}"></script>
+</body>
+</html> 

@@ -1,9 +1,13 @@
+"""
+ACCOUNTS admin configuration
+"""
+
 from django.contrib import admin
 from .models import Accounts, Profile, Card, BankAccount
 
 @admin.register(Accounts)
 class AccountsAdmin(admin.ModelAdmin):
-    list_display = ("user", "iban", "name", "balance", "currency", "created_at")
+    list_display = ("user", "iban", "name", "currency", "created_at")
     search_fields = ("user__email", "iban", "name")
     list_filter = ("currency",)
 

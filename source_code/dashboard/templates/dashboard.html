@@ -1,3 +1,4 @@
+<!-- DASHBOARD HOMEPAGE TEMPLATE -->
 {% load static %}
 
 <!DOCTYPE html>
@@ -41,7 +42,7 @@
       
       <div class="scroll-content">
 
-        <div class="icon-button-circle">
+        <div class="icon-button-circle" onclick="window.location.href='/dashboard/bonifico'" style="cursor:pointer;">
           <div class="circle-img">
             <img src="{% static 'image/operazioni/bonificoSepa.png' %}" alt="Icona">
           </div>
@@ -310,7 +311,73 @@
       </div>
     </div>
   </div>
+
+
+
+  <div class="background"></div>
+
+  <div class="credit-info-modale" id="creditCardModal">
+
+    <div class="title-container">
+      <h3 class="title-modale">Informazioni Carta</h3>
+      <button class="modale-close" id="modalClose">&times;</button>
+    </div>
+    
+    <div class="tools">
+        <button class="card-action-btn secondary" id="toggleModalEye">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+        <button class="card-action-btn primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+            <path d="M2 17l10 5 10-5"/>
+            <path d="M2 12l10 5 10-5"/>
+          </svg>
+          Scarica Estratto
+        </button>
+    </div>      
+    
+    <div class="card-preview">
+        <div class="finhub-card" id="modalCard">
+          <div class="chip"></div>
+          <div class="logo">FinHub<span>Credit Bank</span></div>
+          <div class="card-number"></div>
+          <div class="row">
+            <div class="label">Titolare</div>
+            <div class="label">Scadenza</div>
+          </div>
+          <div class="row">
+            <div class="card-name">Vito Di Venosa</div>
+            <div class="card-expiry">07/25</div>
+          </div>
+        </div>
+    </div>
+
+
+    <div class="info-section">
+
+
+      <div class="info-item">
+        <label>IBAN</label>
+        <div class="value masked" id="modalCardIban"></div>
+      </div>
+
+      <div class="info-item">
+        <label>Saldo</label>
+        <div class="value" id="modalCardBalance"></div>
+      </div>
+
+      <div class="info-item">
+        <label>CVV</label>
+        <div class="value masked" id="modalCardCvv"></div>
+      </div>
+    </div>
+  </div>
   
+
 
   <footer class="footer">
     <div class="footer-content">

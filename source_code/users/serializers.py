@@ -1,3 +1,7 @@
+"""
+USERS serializers configuration.
+"""
+
 from djoser.serializers import TokenCreateSerializer
 from django.contrib.auth import get_user_model
 from rest_framework import serializers

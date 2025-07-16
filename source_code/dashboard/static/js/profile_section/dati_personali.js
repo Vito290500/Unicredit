@@ -1,5 +1,6 @@
+/* FUNCTION FOR FETCH DATI PERSONALI AND POPULATE FIELDS */
+
 document.addEventListener('DOMContentLoaded', async () => {
-    // Fetch dati personali
     let original = {};
     try {
         const resp = await fetch('/api/accounts/me/', {
@@ -17,7 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('fiscal-code-field').value = profile.fiscal_code || '';
         document.getElementById('city-field').value = profile.city || '';
         document.getElementById('postal-code-field').value = profile.postal_code || '';
-        // Popola last update
+      
         if (profile.updated_at) {
             const lastUpdateElem = document.querySelector('.last-update');
             if (lastUpdateElem) {

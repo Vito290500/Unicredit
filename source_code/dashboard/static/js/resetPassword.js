@@ -1,3 +1,5 @@
+/* FUNCTION FOR RESET PASSWORD */
+
 document.getElementById('pw-reset-request')
   .addEventListener('submit', async e => {
     e.preventDefault();

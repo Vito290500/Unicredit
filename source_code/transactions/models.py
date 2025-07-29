@@ -62,6 +62,20 @@ class Transaction(models.Model):
         help_text="Annotazioni libere"
     )
 
+    mittente_nome = models.CharField(max_length=255, blank=True)
+    mittente_email = models.EmailField(blank=True)
+    mittente_iban = models.CharField(max_length=34, blank=True)
+    mittente_citta = models.CharField(max_length=100, blank=True)
+  
+    destinatario_nome = models.CharField(max_length=255, blank=True)
+    destinatario_email = models.EmailField(blank=True)
+    destinatario_iban = models.CharField(max_length=34, blank=True)
+    destinatario_citta = models.CharField(max_length=100, blank=True)
+    
+    clausola = models.CharField(max_length=255, blank=True)
+    stato = models.CharField(max_length=32, default='Completata')
+    id_transazione = models.CharField(max_length=100, blank=True)
+
     class Meta:
         ordering = ["-date", "-created_at"]
 

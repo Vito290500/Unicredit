@@ -2,7 +2,7 @@
 Serializers for accounts app
 """
 from rest_framework import serializers
-from .models import Accounts, Profile, BankAccount, Card, Contact
+from .models import Accounts, Profile, BankAccount, Card, Contact, Accredito, EstrattoConto
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -50,19 +50,25 @@ class AccountWithProfileSerializer(AccountSerializer):
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile', None)
         instance = super().update(instance, validated_data)
+
         if profile_data:
+
             profile = instance.profile
             full_name_before = profile.full_name
+
             for attr, value in profile_data.items():
                 setattr(profile, attr, value)
+            
             profile.save()
-            # Se il full_name è cambiato e non è vuoto, aggiorna il titolare della carta
+            
             if 'full_name' in profile_data and profile_data['full_name'] and profile_data['full_name'] != full_name_before:
                 user = instance.user
                 from accounts.models import BankAccount, Card
                 bank_accounts = BankAccount.objects.filter(user=user)
+
                 for ba in bank_accounts:
                     Card.objects.filter(account=ba).update(holder_name=profile_data['full_name'])
+
         return instance
 
 
@@ -73,6 +79,7 @@ class BankAccountSerializer(serializers.ModelSerializer):
             "id", "iban", "name", "balance", "currency", "opened_at"
         ]
 
+
 class CardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Card
@@ -80,7 +87,30 @@ class CardSerializer(serializers.ModelSerializer):
             "id", "circuit", "pan_last4", "pan_hash", "pan_real", "expiry_month", "expiry_year", "cvv_hash", "cvv_real", "holder_name", "active"
         ]
 
+
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
         fields = ["id", "name", "email", "iban", "city", "created_at"]
+
+
+class AccreditoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Accredito
+        fields = [
+            'id',
+            'account',
+            'date',
+            'amount',
+            'currency',
+            'description',
+            'source',
+            'notes',
+            'created_at',
+        ]
+
+
+class EstrattoContoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EstrattoConto
+        fields = ['id', 'mese', 'anno', 'saldo_iniziale', 'saldo_finale', 'data_creazione']

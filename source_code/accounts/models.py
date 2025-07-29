@@ -10,9 +10,7 @@ from django.dispatch import receiver
 from django.utils import timezone; timezone.now()
 
 class Accounts(models.Model):
-    """
-    Accounts model  
-    """
+    """Accounts model"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     iban = models.CharField(max_length=34, unique=True)
@@ -25,9 +23,7 @@ class Accounts(models.Model):
 
         
 class Profile(models.Model):
-    """
-    Profile Model
-    """
+    """Profile Model"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     account = models.OneToOneField(Accounts, on_delete=models.CASCADE, related_name='profile')
     full_name = models.CharField(max_length=120,blank=True)
@@ -43,6 +39,7 @@ class Profile(models.Model):
 
 
 class BankAccount(models.Model):
+    """Bank Accounts model"""
     id          = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     iban        = models.CharField(max_length=34, unique=True)
@@ -58,6 +55,7 @@ class BankAccount(models.Model):
 
 
 class Card(models.Model):
+    """Cards model"""
     class Circuit(models.TextChoices):
         VISA   = "VISA",  "Visa"
         MAST   = "MC",    "Mastercard"
@@ -85,6 +83,7 @@ class Card(models.Model):
 
 
 class Contact(models.Model):
+    """Contacts model"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='contacts')
     name = models.CharField(max_length=120)
     email = models.EmailField(blank=True)
@@ -100,6 +99,29 @@ class Contact(models.Model):
         return f"{self.name} ({self.iban})"
 
 
+class Accredito(models.Model):
+    """Model for accrediti a favore (incoming credits like salary, refunds, etc.)"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    account = models.ForeignKey(
+        BankAccount,
+        on_delete=models.CASCADE,
+        related_name="accrediti"
+    )
+    date = models.DateField(help_text="Data dell'accredito")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, help_text="Importo dell'accredito")
+    currency = models.CharField(max_length=3, default="EUR", help_text="ISO 4217")
+    description = models.TextField(blank=True)
+    source = models.CharField(max_length=255, help_text="Origine dell'accredito (es. datore di lavoro, merchant)")
+    notes = models.TextField(blank=True, help_text="Annotazioni libere")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.date} - {self.amount} {self.currency} da {self.source}"
+
+
 @receiver(post_save, sender=BankAccount)
 def sync_account_iban(sender, instance, **kwargs):
     try:
@@ -109,3 +131,20 @@ def sync_account_iban(sender, instance, **kwargs):
             account.save(update_fields=["iban"])
     except Accounts.DoesNotExist:
         pass
+
+
+class EstrattoConto(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='estratti_conto')
+    mese = models.PositiveSmallIntegerField() 
+    anno = models.PositiveSmallIntegerField()
+    saldo_iniziale = models.DecimalField(max_digits=12, decimal_places=2)
+    saldo_finale = models.DecimalField(max_digits=12, decimal_places=2)
+    data_creazione = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'mese', 'anno')
+        ordering = ['-anno', '-mese']
+
+    def __str__(self):
+        return f" {self.mese:02d}/{self.anno}"

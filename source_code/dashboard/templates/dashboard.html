@@ -6,15 +6,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>PFH – Dashboard</title>
-  <link rel="icon" href="{% static 'image/iconaWeb.png' %}" type="image/png">
+  <title>FHCB – Dashboard</title>
+  <link rel="icon" href="{% static 'image/IconWeb.png' %}" type="image/png">
 
   <!-- Import CSS -->
   <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'css/componenti.css' %}">
-
-  <!-- Import JS -->
-
 
 </head>
 <body>
@@ -98,7 +95,7 @@
           <h5>Piano PAC</h5>
         </div>
 
-        <div class="icon-button-circle">
+        <div class="icon-button-circle" onclick="window.location.href='{% url 'estratto' %}'">
           <div class="circle-img">
             <img src="{% static 'image/operazioni/estratto.png' %}" alt="Icona">
           </div>
@@ -128,7 +125,7 @@
               <line class="eye-bar" x1="1" y1="13" x2="21" y2="1"/>
             </svg>
           </button>
-          <button>View Transactions</button>
+          <button id="view-transactions-btn" onclick="window.location.href='{% url 'transazioni' %}'">View Transactions</button>
         </div>
       </div>
 
@@ -181,12 +178,12 @@
 
       <div class="card-style" style="background-color: var(--blue-200);">
         <div class="header-card">
-          <h3>Suddivisione spese</h3>
+          <h3>Elenco Movimenti</h3>
           <div class="circle-img">
             <img src="{% static 'image/finworld/spese.png' %}" alt="Icona">
           </div>
         </div>
-        <button>Vedi di più</button>
+        <button id="vedi-spese-btn" onclick="window.location.href='{% url 'elenco-movimenti' %}'">Vedi di più</button>
       </div>
 
       <div class="card-style" style="background-color: var(--blue-200);">
@@ -196,8 +193,29 @@
             <img src="{% static 'image/finworld/elencospese.png' %}" alt="Icona">
           </div>
         </div>
-        <button>Vedi di più</button>
+        <button id="vedi-transazioni-btn" onclick="window.location.href='{% url 'transazioni' %}'">Vedi di più</button>
       </div>
+
+      <div class="card-style" style="background-color: var(--blue-200);">
+        <div class="header-card">
+          <h3>Suddivisione Spese</h3>
+          <div class="circle-img">
+            <img src="{% static 'image/finworld/altriprodotti.png' %}" alt="Icona">
+          </div>
+        </div>
+        <button onclick="window.location.href='{% url 'spese' %}'">Vedi di più</button>
+      </div>
+
+      <div class="card-style">
+        <div class="header-card">
+          <h3>Statistiche</h3>
+          <div class="circle-img">
+            <img src="{% static 'image/finworld/statistiche.png' %}" alt="Icona">
+          </div>
+        </div>
+        <button onclick="window.location.href='{% url 'statistica' %}'">Vedi di più</button>
+      </div>
+
 
       <div class="card-style">
         <div class="header-card">
@@ -209,16 +227,7 @@
         <button>Vedi di più</button>
       </div>
 
-      <div class="card-style">
-        <div class="header-card">
-          <h3>Statistiche</h3>
-          <div class="circle-img">
-            <img src="{% static 'image/finworld/statistiche.png' %}" alt="Icona">
-          </div>
-        </div>
-        <button>Vedi di più</button>
-      </div>
-
+      
       <div class="card-style">
         <div class="header-card">
           <h3>Finanziamenti</h3>
@@ -239,15 +248,7 @@
         <button>Vedi di più</button>
       </div>
     
-      <div class="card-style" style="background-color: var(--blue-200);">
-        <div class="header-card">
-          <h3>Altri prodotti e servizi</h3>
-          <div class="circle-img">
-            <img src="{% static 'image/finworld/altriprodotti.png' %}" alt="Icona">
-          </div>
-        </div>
-        <button>Vedi di più</button>
-      </div>
+      
 
     </div>
 
@@ -312,8 +313,6 @@
     </div>
   </div>
 
-
-
   <div class="background"></div>
 
   <div class="credit-info-modale" id="creditCardModal">
@@ -377,8 +376,6 @@
     </div>
   </div>
   
-
-
   <footer class="footer">
     <div class="footer-content">
 
@@ -400,10 +397,6 @@
       </div>
     </div>
   </footer>
-
-
-
-
 
   <!-- Import CDN end of body -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

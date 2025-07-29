@@ -26,9 +26,17 @@ body{
     gap: 20px;
 }
 .main-title{
-    color: var(--blue-500)!important;
-    font-size: 20px;
-    font-weight: bold;
+  color: var(--blue-500)!important;
+  font-size: 20px !important;
+  font-weight: bold;
+  margin: 0;
+}
+.header-title-container{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1rem;
 }
 .container-dati-utenti{
     width: 100%;
@@ -36,52 +44,123 @@ body{
     justify-content: center;
     align-items: center;
     gap: 20px;
-    flex-direction: column;
 }
-.main-container h3{
-    font-size: 20px;
-    font-weight: bold;
-    color: var(--blue-300);
+.container-dati-mittente h3,
+.container-dati-destinatario h3,
+.other-spec h3 {
+  border-top: 1px solid #ddd;
+  padding-top: 0.5rem;
+  font-size: 1.18rem;
+  font-weight: 600;
+  color: var(--blue-500);
 }
 .container-dati-mittente{
     width: 100%;
 }
-
 .container-dati-destinatario{
     width: 100%;
 }
-
 .container-dati-mittente-content,
 .container-dati-destinatario-content-item{
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border-radius: 4px;
+  row-gap: 10px;
+  column-gap: 10px;
 }
 .celle-dati{
-    gap: 10px;
-    border: 1px solid #dddd;
-    border-radius: 4px;
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
 }
-.celle-dati-title{
-    font-size: 14px;
-    color: var(--gray-500);
+.celle-dati-title {
+  font-size: 1.08rem;
+  color: #222e3a;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin-bottom: 0.35rem;
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
 }
-.celle-dati-value{
-    font-size: 16px;
-    font-weight: bold;
+.celle-dati input{
+  padding: 15px 20px;
+  border-radius: 4px;
+  border: 1px solid #dddd; 
+  background-color: var(--gray-100);
+  font-size: 16px;
+  font-weight: bold;
+  width: 100%;
 }
-
 .other-spec{
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-top: 2rem;
 }
-
+.other-spec h3{
+  margin-bottom: 0rem;
+}
+.other-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 1.2rem;
+}
+.celle-dati-nota {
+  grid-column: 1 / -1;
+}
+.celle-dati-nota textarea.celle-dati-value {
+  height: 120px;
+  width: 100%;
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #222e3a;
+  background-color: #f8fafc;
+  border: 1px solid #dddd;
+  border-radius: 4px;
+  padding: 15px 20px 15px 44px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.celle-dati-nota textarea.celle-dati-value::placeholder {
+  color: #8a99b3;
+  opacity: 1;
+  font-size: 1.01rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+.other-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-bottom: 1.2rem;
+}
+.celle-dati-nota {
+  grid-column: 1 / -1;
+}
+.celle-dati-nota textarea.celle-dati-value {
+  min-height: 44px;
+  width: 100%;
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #222e3a;
+  background-color: #f8fafc;
+  border: 1px solid #dddd;
+  border-radius: 4px;
+  padding: 15px 20px 15px 44px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.celle-dati-nota textarea.celle-dati-value::placeholder {
+  color: #8a99b3;
+  opacity: 1;
+  font-size: 1.01rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
 .container-button{
     display: flex;
     justify-content: center;
@@ -91,7 +170,7 @@ body{
 .container-button button{
     width: 20%;
     margin-top: 20px;
-    padding: 10px;
+    padding: 15px 20px;
     width: 10rem;
     border-radius: 4px;
     border: none;
@@ -103,18 +182,15 @@ body{
 }
 .container-button button:hover{
     background-color: var(--blue-600);
+} 
+.celle-dati.celle-dati-nota{
+  margin-top: -1rem;
 }
 
 
-input{
-    padding: 15px 20px;
-    border-radius: 4px;
-    border: 1px solid #dddd; 
-    background-color: var(--gray-100);
-    width: 60%;
-    text-align: right;
-    color: var(--gray-400);
-}
+
+
+
 
 /* Modale PIN e successo */
 .modal-pin {
@@ -126,13 +202,12 @@ input{
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.3s;
+  display:none;
 }
-
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 .modal-content-pin {
   background: #fff;
   border-radius: 16px;
@@ -144,12 +219,10 @@ input{
   position: relative;
   animation: popIn 0.3s;
 }
-
 @keyframes popIn {
   from { transform: scale(0.9); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
-
 .pin-input {
   margin: 1rem 0 0.5rem 0;
   padding: 0.7rem 1rem;
@@ -165,7 +238,6 @@ input{
 .pin-input:focus {
   border: 1.5px solid #0077ff;
 }
-
 .pin-btn {
   margin: 0.5rem 0.5rem 0 0.5rem;
   padding: 0.7rem 1.5rem;
@@ -187,14 +259,12 @@ input{
 .pin-cancel:hover {
   background: #ccc;
 }
-
 .pin-error {
   color: #d32f2f;
   margin-top: 0.5rem;
   min-height: 1.2em;
   font-size: 0.98em;
 }
-
 .pin-loader {
   border: 4px solid #f3f3f3;
   border-top: 4px solid #0077ff;
@@ -209,7 +279,6 @@ input{
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
 .success-icon {
   font-size: 2.5rem;
   color: #43a047;
@@ -223,13 +292,14 @@ input{
   gap: 1rem;
   margin-top: 1.5rem;
 }
-
-/* Success Modal Improvements */
+#pin-modal-title{
+  color: var(--blue-500);
+}
 .success-title {
   text-align: center;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   margin-bottom: 1.2rem;
-  color: #222;
+  color: var(--blue-500);
   word-break: break-word;
 }
 .success-icon-animated {
@@ -279,66 +349,77 @@ input{
   background: #c0392b;
 }
 
-/* Rubrica button */
+
+
+/* Rubrica Modale */
 .rubrica-btn {
   margin-left: 1rem;
-  background: #1976d2;
+  background: var(--blue-500);
   color: #fff;
-  width: 8rem;
-  border-radius: 4px;
-  padding: 10px 10px;
-  font-size: 1.1rem;
   border: none;
+  border-radius: 6px;
+  padding:  15px 20px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.18s;
 }
 .rubrica-btn:hover {
   background: #125ea2;
 }
-
-/* Rubrica Modal */
 #rubrica-modal .modal-content-pin {
-  min-width: 320px;
-  max-width: 420px;
-  padding: 2rem 1.5rem;
-  text-align: center;
+  min-width: 370px;
+  max-width: 480px;
+  padding: 2.2rem 2.2rem 1.5rem 2.2rem;
 }
 .rubrica-list {
-  max-height: 260px;
-  overflow-y: auto;
-  margin: 1rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
+  margin-top: 1.1rem;
 }
 .rubrica-contact-item {
-  background: #f5f5f5;
-  border-radius: 6px;
-  padding: 0.7rem 1rem;
+  background: #f8fafc;
+  border-radius: 7px;
+  padding: 1.1rem 1.2rem 0.9rem 1.2rem;
+  margin-bottom: 0.7rem;
+  box-shadow: 0 2px 8px #0001;
   cursor: pointer;
-  transition: background 0.2s;
-  text-align: left;
-  border: 1px solid #e0e0e0;
+  transition: box-shadow 0.18s, background 0.18s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
 }
 .rubrica-contact-item:hover {
-  background: #e3f2fd;
+  background: #e5eaf2;
+  box-shadow: 0 4px 16px #0002;
 }
 .rubrica-contact-name {
+  font-size: 1.13rem;
   font-weight: 600;
-  color: #1976d2;
+  color: var(--blue-300);
+  margin-bottom: 0.1rem;
 }
 .rubrica-contact-iban {
-  font-size: 0.95rem;
-  color: #444;
-  word-break: break-all;
+  font-size: 1.01rem;
+  font-weight: 500;
+  color: #222e3a;
+  margin-bottom: 0.1rem;
 }
-
-/* Responsive fix for modal */
+.rubrica-contact-item > div {
+  font-size: 0.98rem;
+  color: #6b7685;
+}
+.rubrica-modal-title {
+  color: var(--blue-500);
+  text-align: center;
+  font-size: 1.18rem;
+  font-weight: 600;
+  margin-bottom: 0.7rem;
+  margin-top: 0.2rem;
+}
 @media (max-width: 600px) {
   .modal-content-pin {
-    min-width: 90vw;
-    max-width: 98vw;
-    padding: 1.2rem 0.5rem;
+    min-width: 90vw !important;
+    max-width: 98vw !important;
+    padding: 1.2rem 0.5rem !important;
   }
   .success-title {
     font-size: 1.1rem;
@@ -349,10 +430,107 @@ input{
     padding: 0.7rem 0.7rem;
   }
 }
-
-.header-title-container{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
+.celle-dati input, .celle-dati select, .celle-dati textarea {
+  box-sizing: border-box;
 }
+.input-icon-wrapper {
+  position: relative;
+  width: 100%;
+}
+.input-icon-wrapper svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  fill: #bdbdbd;
+  pointer-events: none;
+}
+.input-icon-wrapper input {
+  padding-left: 44px !important;
+}
+.input-icon-wrapper input,
+.celle-dati input,
+.celle-dati-value {
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+  color: #222e3a;
+  font-size: 1.05rem;
+  font-weight: 500;
+  background-color: #f8fafc;
+}
+.input-icon-wrapper input::placeholder,
+.celle-dati input::placeholder,
+.celle-dati-value::placeholder {
+  color: #8a99b3;
+  opacity: 1;
+  font-size: 1.01rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+.close-modal-x {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #e5eaf2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: box-shadow 0.18s, border-color 0.18s;
+  z-index: 10;
+  padding: 0;
+}
+.close-modal-x:hover {
+  box-shadow: 0 2px 8px #0001;
+  border-color: #4BB543;
+}
+.success-title {
+  color: #4BB543 !important;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-top: 0.5rem;
+  margin-bottom: 0.2rem;
+  text-align: center;
+}
+.success-desc {
+  color: #6b7685;
+  font-size: 1.01rem;
+  margin-bottom: 0.7rem;
+  text-align: center;
+}
+.success-actions-row {
+  display: flex;
+  flex-direction: row;
+  gap: 18px;
+  justify-content: center;
+  margin-top: 1.2rem;
+  margin-bottom: 0.2rem;
+}
+.anteprima-btn {
+  background: var(--blue-500);
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  transition: background 0.18s;
+}
+.anteprima-btn:hover {
+  background: var(--blue-600);
+}
+#save-contact-btn {
+  background: #4BB543;
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  transition: background 0.18s;
+}
+#save-contact-btn:hover {
+  background: #388e3c;
+}
+
+
+

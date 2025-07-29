@@ -1,5 +1,4 @@
 /* CONTAINER INFORMAZIONI ACCOUNT */
-
 .container-informazioni-account{
     background-color: var(--bacground-contrast);
     box-shadow: 1px 1px 8px 2px rgba(0,0,0,0.05);
@@ -53,9 +52,6 @@
 #canc-btn{
     display: none;
 }
-
-
-
 
 
 
@@ -129,8 +125,6 @@
     font-size: 0.95em;
     margin-top: 0.3rem;
 }
-
-
 .updated-div{
     display: flex;
     justify-content: flex-start;

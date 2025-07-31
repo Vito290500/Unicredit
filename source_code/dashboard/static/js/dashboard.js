@@ -267,4 +267,3 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalCardBalance) modalCardBalance.textContent = `€ ${Number(cardData.balance).toLocaleString('it-IT',{minimumFractionDigits:2})}`;
   }
 });
-

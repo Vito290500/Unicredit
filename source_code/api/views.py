@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from accounts.models import BankAccount, Card
-from accounts.serializers import BankAccountSerializer, CardSerializer,EstrattoContoSerializer
-from accounts.models import Accounts, EstrattoConto
+from accounts.serializers import BankAccountSerializer, CardSerializer,EstrattoContoSerializer, GoalsSavingSerializer, GoalsSavingMovimentoSerializer
+from accounts.models import Accounts, EstrattoConto, GoalsSaving, GoalsSavingMovimento
 from rest_framework.generics import ListAPIView
 from transactions.models import Category,Transaction
 from rest_framework import serializers
@@ -17,6 +17,11 @@ from datetime import timedelta, date
 from django.utils import timezone
 from django.db.models import Sum
 from rest_framework import generics, permissions
+from decimal import Decimal
+from django.db import transaction
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DashboardDataAPIView(APIView):
@@ -220,3 +225,82 @@ class MovimentiMensiliAPIView(APIView):
             
         except EstrattoConto.DoesNotExist:
             return Response({'error': 'Estratto non trovato'}, status=404)
+        
+
+class GoalsSavingListCreateView(generics.ListCreateAPIView):
+    serializer_class = GoalsSavingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return GoalsSaving.objects.filter(bank_account__user=self.request.user)
+
+    def perform_create(self, serializer):
+        # Associa il bank_account dell'utente loggato
+        bank_account = self.request.user.bankaccount_set.first()
+        if not bank_account:
+            raise ValidationError("Nessun conto associato all'utente.")
+        serializer.save(bank_account=bank_account)
+
+class GoalsSavingDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = GoalsSavingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return GoalsSaving.objects.filter(bank_account__user=self.request.user)
+    
+
+from decimal import Decimal
+
+class GoalsSavingAddMoneyView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            goal = GoalsSaving.objects.get(pk=pk, bank_account__user=request.user)
+        except GoalsSaving.DoesNotExist:
+            return Response({'detail': 'Obiettivo non trovato.'}, status=404)
+
+        importo = request.data.get('importo')
+        descrizione = request.data.get('descrizione', 'Versamento manuale')
+
+        if not importo:
+            return Response({'detail': 'Importo richiesto.'}, status=400)
+
+        try:
+            # Usa Decimal invece di float per evitare problemi di precisione
+            importo = Decimal(str(importo))
+        except (ValueError, TypeError):
+            return Response({'detail': 'Importo non valido.'}, status=400)
+
+        if importo <= 0:
+            return Response({'detail': 'Importo deve essere positivo.'}, status=400)
+
+        # Log per debug
+        logger.info(f"Versamento di {importo} per goal {goal.id} ({goal.nome})")
+        logger.info(f"Importo attuale prima del versamento: {goal.importo_attuale}")
+
+        # Usa il metodo del modello per gestire il versamento
+        try:
+            with transaction.atomic():
+                movimento = goal.aggiungi_versamento(importo, descrizione)
+
+                # Log per debug
+                logger.info(f"Importo attuale dopo il versamento: {goal.importo_attuale}")
+
+                # Ricarica il goal dal database per assicurarsi che i dati siano aggiornati
+                goal.refresh_from_db()
+
+                return Response({
+                    'movimento': GoalsSavingMovimentoSerializer(movimento).data,
+                    'goal_aggiornato': GoalsSavingSerializer(goal).data
+                }, status=201)
+
+        except ValueError as e:
+            return Response({'detail': str(e)}, status=400)
+        except Exception as e:
+            logger.error(f"Errore durante il versamento: {str(e)}")
+            return Response({'detail': 'Errore interno durante il versamento.'}, status=500)
+
+        except Exception as e:
+            logger.error(f"Errore durante il versamento: {str(e)}")
+            return Response({'detail': 'Errore interno durante il versamento.'}, status=500)

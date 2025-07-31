@@ -74,6 +74,8 @@
   {% include 'components/footer.html' %}
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Include auth utilities first -->
+  <script src="{% static 'js/auth-utils.js' %}"></script>
   <script src="{% static 'js/elenco_movimenti.js' %}"></script>
 </body>
 </html> 

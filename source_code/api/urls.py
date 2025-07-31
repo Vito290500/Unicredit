@@ -4,8 +4,8 @@ API urls endpoint configuration.
 from rest_framework.routers import DefaultRouter
 from transactions.views import TransactionViewSet, TransferView
 from django.urls import path
-from .views import DashboardDataAPIView, DashboardStatsView, EntrateUsciteChartView, CategoriaChartView
-from api.views import UserBankAccountListView, CategoryListView, DashboardStatsView, EstrattoContoListAPIView, MovimentiMensiliAPIView
+from .views import DashboardDataAPIView, DashboardStatsView, EntrateUsciteChartView, CategoriaChartView, GoalsSavingAddMoneyView
+from api.views import UserBankAccountListView, CategoryListView, DashboardStatsView, EstrattoContoListAPIView, MovimentiMensiliAPIView, GoalsSavingDetailView, GoalsSavingListCreateView
 from accounts.views import AccreditoViewSet
 
 router = DefaultRouter()
@@ -22,4 +22,7 @@ urlpatterns = router.urls + [
     path('categoria-chart/', CategoriaChartView.as_view(), name='categoria-chart'),
     path('estratti-conto/', EstrattoContoListAPIView.as_view()),
     path('estratti-conto/<uuid:estratto_id>/movimenti/', MovimentiMensiliAPIView.as_view(), name='movimenti-mensili'),
+    path('goals-saving/', GoalsSavingListCreateView.as_view(), name='goals-saving-list-create'),
+    path('goals-saving/<uuid:pk>/', GoalsSavingDetailView.as_view(), name='goals-saving-detail'),
+    path('goals-saving/<uuid:pk>/add-money/', GoalsSavingAddMoneyView.as_view(), name='goals-saving-add-money'),
 ]

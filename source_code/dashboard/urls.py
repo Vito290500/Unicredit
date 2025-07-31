@@ -17,5 +17,6 @@ urlpatterns = [
     path('dashboard/statistica',                    TemplateView.as_view(template_name='statistica.html'),                                            name='statistica'),
     path('suddivisione-spese/',                     TemplateView.as_view(template_name='spese.html'),                                                 name='spese'),
     path('estratto-conto/',                         TemplateView.as_view(template_name='estratto_conto.html'),                                        name='estratto'),
+    path('goals-saving/',                           TemplateView.as_view(template_name='goals_saving.html'),                                          name='goals'),
 ]
 

@@ -16,6 +16,8 @@
 </head>
 <body>
   {% include 'components/navbar.html' %}
+
+  <div class="goal_saving_button"></div>
   
   <div class="banner-container">
 
@@ -60,11 +62,11 @@
           <h5>Ricarica prepagata</h5>
         </div>
 
-        <div class="icon-button-circle">
+        <div class="icon-button-circle" onclick="window.location.href='{% url 'goals' %}'" style="cursor:pointer;">
           <div class="circle-img">
-            <img src="{% static 'image/operazioni/p2p.png' %}" alt="Icona">
+            <img src="{% static 'image/operazioni/goals.png' %}" alt="Icona">
           </div>
-          <h5>P2P instant (alias)</h5>
+          <h5>Goal Saving</h5>
         </div>
 
         <div class="icon-button-circle">
@@ -401,6 +403,8 @@
   <!-- Import CDN end of body -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+  <!-- Import auth utilities first -->
+  <script src="{% static 'js/auth-utils.js' %}"></script>
   <!-- Import JS end of body -->
   <script src="{% static 'js/dashboard.js' %}"></script>
 </body>

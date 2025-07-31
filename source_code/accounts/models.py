@@ -148,3 +148,145 @@ class EstrattoConto(models.Model):
 
     def __str__(self):
         return f" {self.mese:02d}/{self.anno}"
+    
+
+
+class GoalsSaving(models.Model):
+    """Goals Saving model for financial objectives"""
+
+    class Periodicita(models.TextChoices):
+        SETTIMANALE = "WEEKLY", "Settimanale"
+        MENSILE = "MONTHLY", "Mensile"
+        TRIMESTRALE = "QUARTERLY", "Trimestrale"
+        SEMESTRALE = "BIANNUAL", "Semestrale"
+        ANNUALE = "YEARLY", "Annuale"
+
+    class Colore(models.TextChoices):
+        BLU = "#3498db", "Blu"
+        VERDE = "#2ecc71", "Verde"
+        ROSSO = "#e74c3c", "Rosso"
+        ARANCIONE = "#f39c12", "Arancione"
+        VIOLA = "#9b59b6", "Viola"
+        TURCHESE = "#1abc9c", "Turchese"
+        ROSA = "#e91e63", "Rosa"
+        INDACO = "#3f51b5", "Indaco"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    bank_account = models.ForeignKey(
+        BankAccount,
+        on_delete=models.CASCADE,
+        related_name='goals_saving'
+    )
+    nome = models.CharField(max_length=120, help_text="Nome dell'obiettivo (es. Vacanze, Sport, Auto)")
+    importo_target = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        help_text="Importo obiettivo da raggiungere"
+    )
+    importo_attuale = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Importo attualmente risparmiato"
+    )
+    colore = models.CharField(
+        max_length=7,
+        choices=Colore.choices,
+        default=Colore.BLU,
+        help_text="Colore dell'obiettivo per la visualizzazione"
+    )
+    data_limite = models.DateField(
+        blank=True,
+        null=True,
+        help_text="Data limite per raggiungere l'obiettivo (facoltativo)"
+    )
+    periodicita = models.CharField(
+        max_length=10,
+        choices=Periodicita.choices,
+        blank=True,
+        help_text="Frequenza del versamento (facoltativo)"
+    )
+    importo_periodicita = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        blank=True,
+        null=True,
+        help_text="Importo da versare per ogni periodo"
+    )
+    attivo = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created']
+        unique_together = ('bank_account', 'nome')
+
+    def __str__(self):
+        return f"{self.nome} - {self.importo_attuale}/{self.importo_target}€"
+    
+    @property
+    def percentuale_completamento(self):
+        """Calcola la percentuale di completamento dell'obiettivo"""
+        if self.importo_target > 0:
+            return min((self.importo_attuale / self.importo_target) * 100, 100)
+        return 0
+
+    @property
+    def importo_rimanente(self):
+        """Calcola quanto manca per raggiungere l'obiettivo"""
+        return max(self.importo_target - self.importo_attuale, 0)
+
+    @property
+    def is_completato(self):
+        """Verifica se l'obiettivo è stato raggiunto"""
+        return self.importo_attuale >= self.importo_target
+
+    def aggiungi_versamento(self, importo, descrizione="Versamento"):
+        """Metodo per aggiungere un versamento al goal"""
+        from decimal import Decimal
+
+        if not isinstance(importo, Decimal):
+            importo = Decimal(str(importo))
+
+        if importo <= 0:
+            raise ValueError("L'importo deve essere positivo")
+
+        # Crea il movimento
+        movimento = GoalsSavingMovimento.objects.create(
+            goal=self,
+            tipo=GoalsSavingMovimento.TipoMovimento.VERSAMENTO,
+            importo=importo,
+            descrizione=descrizione
+        )
+
+        # Aggiorna l'importo attuale
+        self.importo_attuale += importo
+        self.save(update_fields=['importo_attuale', 'updated_at'])
+
+        return movimento
+
+
+class GoalsSavingMovimento(models.Model):
+    
+    """Movimenti per i Goals Saving"""
+    
+    class TipoMovimento(models.TextChoices):
+        VERSAMENTO = "DEPOSIT", "Versamento"
+        PRELIEVO = "WITHDRAWAL", "Prelievo"
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    goal = models.ForeignKey(
+        GoalsSaving, 
+        on_delete=models.CASCADE, 
+        related_name='movimenti'
+    )
+    tipo = models.CharField(max_length=10, choices=TipoMovimento.choices)
+    importo = models.DecimalField(max_digits=12, decimal_places=2)
+    descrizione = models.TextField(blank=True)
+    data_movimento = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-data_movimento']
+    
+    def __str__(self):
+        return f"{self.goal.nome} - {self.tipo} {self.importo}€"

@@ -2,7 +2,7 @@
 Serializers for accounts app
 """
 from rest_framework import serializers
-from .models import Accounts, Profile, BankAccount, Card, Contact, Accredito, EstrattoConto
+from .models import Accounts, Profile, BankAccount, Card, Contact, Accredito, EstrattoConto, GoalsSaving, GoalsSavingMovimento
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -114,3 +114,27 @@ class EstrattoContoSerializer(serializers.ModelSerializer):
     class Meta:
         model = EstrattoConto
         fields = ['id', 'mese', 'anno', 'saldo_iniziale', 'saldo_finale', 'data_creazione']
+
+
+
+class GoalsSavingSerializer(serializers.ModelSerializer):
+    percentuale_completamento = serializers.ReadOnlyField()
+    importo_rimanente = serializers.ReadOnlyField()
+    is_completato = serializers.ReadOnlyField()
+
+    class Meta:
+        model = GoalsSaving
+        fields = [
+            'id', 'bank_account', 'nome', 'importo_target', 'importo_attuale',
+            'colore', 'data_limite', 'periodicita', 'importo_periodicita', 'attivo',
+            'created', 'updated_at', 'percentuale_completamento',
+            'importo_rimanente', 'is_completato'
+        ]
+        read_only_fields = ['id', 'importo_attuale', 'created', 'updated_at', 'bank_account']
+
+
+class GoalsSavingMovimentoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GoalsSavingMovimento
+        fields = ['id', 'goal', 'tipo', 'importo', 'descrizione', 'data_movimento']
+        read_only_fields = ['id', 'goal', 'tipo', 'data_movimento']

@@ -1,7 +1,6 @@
 const API_URL = '/api/goals-saving/';
 
-// Usa le utility di autenticazione globali
-const { authFetch, requireAuth, handleTokenExpiration } = window.authUtils;
+
 
 // --- FUNZIONI UTILITY ---
 function showSpinner() {
@@ -65,7 +64,11 @@ function showVersamentoModal(goalId, goalNome, callback) {
 
     if (importo && importo > 0) {
       closeModal();
-      callback(importo, descrizione);
+      if (typeof callback === 'function') {
+        callback(importo, descrizione);
+      } else {
+        console.error('Callback non è una funzione');
+      }
     }
   };
 
@@ -135,7 +138,10 @@ document.addEventListener('DOMContentLoaded', function() {
   function renderGoals(goals) {
     goalsList.innerHTML = '';
     if (!goals.length) {
-      goalsList.innerHTML = '<p style="text-align:center;color:#666;padding:2rem;">Nessun obiettivo ancora creato.</p>';
+      const noGoalsMessage = document.createElement('div');
+      noGoalsMessage.className = 'no-goals-message';
+      noGoalsMessage.textContent = 'nessun obbiettivo creato';
+      goalsList.appendChild(noGoalsMessage);
       return;
     }
     goals.forEach(goal => {
@@ -364,27 +370,22 @@ document.addEventListener('DOMContentLoaded', function() {
     if (event.target == modal) closeModalFunc();
   }
 
-  // Controllo iniziale del token
-  if (accessToken) {
-    // Verifica se il token è ancora valido facendo una richiesta di test
-  // Controllo iniziale dell'autenticazione
-  if (requireAuth()) {
-    // Verifica se il token è ancora valido facendo una richiesta di test
-    checkTokenValidity();
+  // Controllo iniziale del token e caricamento goals tramite authUtils
+  if (!window.authUtils.requireAuth()) {
+    return; // User will be redirected to login
   }
 
-  // Funzione per verificare la validità del token
   async function checkTokenValidity() {
     try {
-      const { response } = await authFetch(API_URL);
+      const { response } = await window.authUtils.authFetch('/api/goals-saving/');
       if (response.ok) {
-        // Token valido, carica i goals
         loadGoals();
       }
-      // Se il token è scaduto, authFetch gestirà automaticamente il redirect
     } catch (error) {
       console.error('Errore nella verifica del token:', error);
       loadGoals();
     }
   }
+
+  checkTokenValidity();
 });

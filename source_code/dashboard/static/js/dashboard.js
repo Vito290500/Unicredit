@@ -1,5 +1,9 @@
 /* FUNCTION FOR HANDLING DROPDOWN MENU */
 document.addEventListener('DOMContentLoaded', () => {
+  if (!window.authUtils.requireAuth()) {
+    return; // User will be redirected to login
+  }
+
   const toggle = document.getElementById('profileToggle');
   const menu   = document.getElementById('profileMenu');
 
@@ -84,59 +88,65 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// FETCH DATI DASHBOARD E POPOLAMENTO DINAMICO
 document.addEventListener('DOMContentLoaded', () => {
-  fetch('/api/dashboard-data/', {
-    headers: {
-      'Authorization': 'Bearer ' + localStorage.getItem('accessToken'),
-      'Accept': 'application/json'
-    },
-    credentials: 'same-origin'
-  })
-    .then(response => response.json())
-    .then(data => {
+  
+  if (!window.authUtils.requireAuth()) {
 
-      if (data.user_full_name) {
-        const userNameElem = document.querySelector('.banner-container h3');
-        if (userNameElem) userNameElem.textContent = data.user_full_name;
-      }
-      if (data.last_login) {
-        const lastLoginElem = document.querySelector('.banner-container p');
-        if (lastLoginElem) {
-          const date = new Date(data.last_login);
-          lastLoginElem.textContent = 'Ultimo accesso: ' + date.toLocaleString('it-IT');
+    return; // User will be redirected to login
+  }
+
+  window.authUtils.authFetch('/api/dashboard-data/')
+    .then(({ response, data }) => {
+   
+      if (response.ok && data) {
+        if (data.user_full_name) {
+          const userNameElem = document.querySelector('.banner-container h3');
+          if (userNameElem) {
+            userNameElem.textContent = data.user_full_name;
+      
+          }
         }
-      }
+        if (data.last_login) {
+     
+          const lastLoginElem = document.getElementById('last-login');
+     
+          if (lastLoginElem) {
+            const date = new Date(data.last_login);
+            lastLoginElem.textContent = 'Ultimo accesso: ' + date.toLocaleString('it-IT');
 
-      if (data.card && data.account) {
-        const front = document.querySelector('.finhub-card:not(.back)');
-        const back  = document.querySelector('.finhub-card.back');
-        if (front) {
-
-          let cardNumber = data.card.card_number || '0000';
-          cardNumber = cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ');
-          front.dataset.number = cardNumber;
-          front.dataset.name = data.card.holder_name || '---';
-          front.dataset.expiry = (data.card.expiry_month ? String(data.card.expiry_month).padStart(2, '0') : '--') + '/' + (data.card.expiry_year || '--');
-          front.dataset.balance = data.account.balance || '0.00';
-
-          front.dataset.iban = data.card.iban || '';
-          front.dataset.cvv = data.card.cvv || '';
-
-          front.querySelector('.card-number').textContent = front.dataset.number;
-          front.querySelector('.card-name').textContent = front.dataset.name;
-          front.querySelector('.card-expiry').textContent = front.dataset.expiry;
-          front.querySelector('.card-balance').textContent = `€ ${Number(front.dataset.balance).toLocaleString('it-IT',{minimumFractionDigits:2})}`;
+          }
         }
-        if (back) {
-          back.dataset.cvv = data.card.cvv || '';
-          back.querySelector('.cvv-box').textContent = back.dataset.cvv;
+
+        if (data.card && data.account) {
+          const front = document.querySelector('.finhub-card:not(.back)');
+          const back  = document.querySelector('.finhub-card.back');
+          if (front) {
+            let cardNumber = data.card.card_number || '0000';
+            cardNumber = cardNumber.replace(/(\d{4})(?=\d)/g, '$1 ');
+            front.dataset.number = cardNumber;
+            front.dataset.name = data.card.holder_name || '---';
+            front.dataset.expiry = (data.card.expiry_month ? String(data.card.expiry_month).padStart(2, '0') : '--') + '/' + (data.card.expiry_year || '--');
+            front.dataset.balance = data.account.balance || '0.00';
+            front.dataset.iban = data.card.iban || '';
+            front.dataset.cvv = data.card.cvv || '';
+            front.querySelector('.card-number').textContent = front.dataset.number;
+            front.querySelector('.card-name').textContent = front.dataset.name;
+            front.querySelector('.card-expiry').textContent = front.dataset.expiry;
+            front.querySelector('.card-balance').textContent = `€ ${Number(front.dataset.balance).toLocaleString('it-IT',{minimumFractionDigits:2})}`;
+          }
+          if (back) {
+            back.dataset.cvv = data.card.cvv || '';
+            back.querySelector('.cvv-box').textContent = back.dataset.cvv;
+          }
         }
       }
     })
     .catch(err => {
-      console.error('Errore nel fetch dati dashboard:', err);
+      console.error('Errore nel fetch dei dati della dashboard:', err);
     });
+
+  // ... existing code ...
+
 });
 
 

@@ -10,7 +10,7 @@ class UserAdmin(BaseUserAdmin):
     """Class customization that handling layout customization for users admin section."""
 
     model = User
-    list_display   = ("email", "full_name", "is_staff", "is_superuser", "is_active")
+    list_display   = ("email", "full_name", "is_staff", "is_superuser", "is_active", "last_login")
     list_filter    = ("is_staff", "is_superuser", "is_active")
     search_fields  = ("email", "full_name")
     ordering       = ("email",)
@@ -27,6 +27,7 @@ class UserAdmin(BaseUserAdmin):
                 "user_permissions",
             )
         }),
+        ("Informazioni di accesso", {"fields": ("last_login",)}),
     )
 
     add_fieldsets = (

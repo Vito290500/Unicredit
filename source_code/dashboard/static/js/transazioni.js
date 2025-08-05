@@ -14,22 +14,60 @@ window.updateFilterBtn = function() {
   filterBtn.innerHTML = n > 0 ? `Filtra categorie <span style='background:var(--blue-500);color:#fff;border-radius:8px;padding:0 7px;margin-left:7px;font-size:0.98em;'>${n}</span> ▼` : 'Filtra categorie ▼';
 };
 
-function fetchTransazioni(page = 1, search = '', categories = []) {
+document.addEventListener('DOMContentLoaded', () => {
+  if (!window.authUtils.requireAuth()) {
+    return; // User will be redirected to login
+  }
+
+  fetchTransazioni();
+  document.getElementById('transazioni-search').addEventListener('input', function(e) {
+    filterAndRender();
+  });
+  const filterBtn = document.getElementById('transazioni-filter-btn');
+  const filterMenu = document.getElementById('transazioni-filter-menu');
+  filterBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (filterMenu.innerHTML.trim() === '') return;
+    filterMenu.classList.toggle('show');
+  });
+  document.addEventListener('click', function(e) {
+    if (!filterMenu.contains(e.target) && e.target !== filterBtn) {
+      filterMenu.classList.remove('show');
+    }
+  });
+
+  const profileToggle = document.getElementById('profileToggle');
+  const profileMenu = document.getElementById('profileMenu');
+  if (profileToggle && profileMenu) {
+    profileToggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isOpen = !profileMenu.classList.contains('hidden');
+      profileMenu.classList.toggle('hidden', isOpen);
+      profileToggle.setAttribute('aria-expanded', String(!isOpen));
+    });
+    document.addEventListener('click', function() {
+      if (!profileMenu.classList.contains('hidden')) {
+        profileMenu.classList.add('hidden');
+        profileToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+});
+
+async function fetchTransazioni(page = 1, search = '', categories = []) {
   let url = `${API_URL}?page=${page}`;
   if (search) url += `&search=${encodeURIComponent(search)}`;
   if (categories && categories.length > 0) {
     url += `&category=${categories.map(encodeURIComponent).join(',')}`;
   }
-  fetch(url, {
-    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('accessToken') }
-  })
-    .then(res => res.json())
-    .then(data => {
-      allTransazioni = data.results || [];
-      renderTransazioniTable(allTransazioni, data.count || 0, page);
-      renderPagination(data.count || 0, page);
-      if (data.results) extractCategories(data.results);
-    });
+
+  const { response, data } = await window.authUtils.authFetch(url);
+  if (response.ok && data) {
+    allTransazioni = data.results || [];
+    renderTransazioniTable(allTransazioni, data.count || 0, page);
+    renderPagination(data.count || 0, page);
+    if (data.results) extractCategories(data.results);
+  }
 }
 
 function renderTransazioniTable(transazioni, totalCount, page) {
@@ -51,15 +89,12 @@ function renderTransazioniTable(transazioni, totalCount, page) {
   });
 
   document.querySelectorAll('.scarica-btn').forEach((btn) => {
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', async function() {
       const id = btn.getAttribute('data-id');
-      fetch(`/api/transactions/${id}/`, {
-        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('accessToken') }
-      })
-        .then(res => res.json())
-        .then(data => {
-          generateAndPreviewPDF(data);
-        });
+      const { response, data } = await window.authUtils.authFetch(`/api/transactions/${id}/`);
+      if (response.ok && data) {
+        generateAndPreviewPDF(data);
+      }
     });
   });
 }

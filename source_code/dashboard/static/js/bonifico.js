@@ -1,26 +1,24 @@
+function showElement(el) {
+  if (el) el.style.display = 'flex';
+}
+function hideElement(el) {
+  if (el) el.style.display = 'none';
+}
+
 /*  Funzione per recuperare e popolare i dati del mittente */
-function fetchAndPopulateMittente(accessToken) {
+async function fetchAndPopulateMittente(accessToken) {
   const mittenteNome = document.querySelector('input[name="mittente-nome"]');
   const mittenteEmail = document.querySelector('input[name="mittente-email"]');
   const mittenteIban = document.querySelector('input[name="mittente-iban"]');
   const mittenteCitta = document.querySelector('input[name="mittente-citta"]');
 
-  fetch('/api/accounts/me/', {
-    credentials: 'include',
-    headers: {
-      'Authorization': 'Bearer ' + accessToken,
-      'Content-Type': 'application/json'
-    }
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data) {
-        if (mittenteNome) mittenteNome.value = data.profile?.full_name || '';
-        if (mittenteEmail) mittenteEmail.value = data.email || '';
-        if (mittenteIban) mittenteIban.value = data.iban || '';
-        if (mittenteCitta) mittenteCitta.value = data.profile?.city || '';
-      }
-    });
+  const { response, data } = await window.authUtils.authFetch('/api/accounts/me/');
+  if (response.ok && data) {
+    if (mittenteNome) mittenteNome.value = data.profile?.full_name || '';
+    if (mittenteEmail) mittenteEmail.value = data.email || '';
+    if (mittenteIban) mittenteIban.value = data.iban || '';
+    if (mittenteCitta) mittenteCitta.value = data.profile?.city || '';
+  }
 }
 
 /* Gestione modale PIN e invio bonifico */
@@ -40,7 +38,7 @@ function setupBonificoFlow(accessToken) {
   const rubricaBtn = document.getElementById('rubrica-btn');
   const rubricaModal = document.getElementById('rubrica-modal');
   const rubricaList = document.getElementById('rubrica-list');
-  const rubricaCloseBtn = document.getElementById('rubrica-close-btn');
+
   const rubricaCloseXBtn = document.getElementById('rubrica-close-x-btn');
   const closeSuccessModalBtn = document.getElementById('close-success-modal-btn');
 
@@ -66,6 +64,7 @@ function setupBonificoFlow(accessToken) {
   function showSuccessModal() {
     successModal.style.display = 'flex';
   }
+
   function hideSuccessModal() {
     successModal.style.display = 'none';
   }
@@ -75,106 +74,6 @@ function setupBonificoFlow(accessToken) {
     showPinModal();
   });
 
-  pinConfirmBtn.addEventListener('click', function() {
-    const pin = pinInput.value.trim();
-    if (!pin) {
-      pinError.textContent = 'Inserisci il PIN';
-      return;
-    }
-    pinLoader.style.display = 'block';
-    pinInput.style.display = 'none';
-    pinConfirmBtn.style.display = 'none';
-    pinCancelBtn.style.display = 'none';
-    pinError.textContent = '';
-    pinModalTitle.textContent = 'Autorizzazione in corso...';
-    pinModalMessage.textContent = '';
-
-    const importo = document.querySelector('.other-spec input[placeholder="Inserisci l\'importo"]')?.value || '';
-    const nota = document.querySelector('.other-spec input[placeholder="Scrivi qui una nota testuale"]')?.value || '';
-    const categoria = document.querySelector('.other-spec input[placeholder="Scrivi qui la categoria"]')?.value || '';
-    const clausola = document.querySelector('.other-spec input[placeholder="Inserisci qui una motivazione"]')?.value || '';
-    const destNome = document.querySelector('.container-dati-destinatario input[placeholder="Inserisci il nome o entità"]')?.value || '';
-    const destEmail = document.querySelector('.container-dati-destinatario input[placeholder="Inserisci l\'email"]')?.value || '';
-    const destIban = document.querySelector('.container-dati-destinatario input[placeholder="Inserisci l\'IBAN"]')?.value || '';
-    const destCitta = document.querySelector('.container-dati-destinatario input[placeholder="Inserisci la città di residenza"]')?.value || '';
-
-    fetch('/api/transfer/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + accessToken
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        amount: importo,
-        description: nota,
-        category: categoria,
-        clause: clausola,
-        pin: pin,
-        to_name: destNome,
-        to_email: destEmail,
-        to_iban: destIban,
-        to_city: destCitta
-      })
-    })
-    .then(res => res.json().then(data => ({ status: res.status, data })))
-    .then(({ status, data }) => {
-      pinLoader.style.display = 'none';
-      if (status === 201) {
-        const mittenteNome = document.querySelector('input[name="mittente-nome"]')?.value || '';
-        const mittenteEmail = document.querySelector('input[name="mittente-email"]')?.value || '';
-        const mittenteIban = document.querySelector('input[name="mittente-iban"]')?.value || '';
-        const mittenteCitta = document.querySelector('input[name="mittente-citta"]')?.value || '';
-        const destNome = document.querySelector('.container-dati-destinatario input[placeholder="Inserisci il nome o entità"]')?.value || '';
-        const destEmail = document.querySelector('.container-dati-destinatario input[placeholder="Inserisci l\'email"]')?.value || '';
-        const destIban = document.querySelector('.container-dati-destinatario input[placeholder="Inserisci l\'IBAN"]')?.value || '';
-        const destCitta = document.querySelector('.container-dati-destinatario input[placeholder="Inserisci la città di residenza"]')?.value || '';
-        const clausola = document.querySelector('.other-spec input[placeholder="Inserisci qui una motivazione"]')?.value || '';
-        const importo = document.querySelector('.other-spec input[placeholder="Inserisci l\'importo"]')?.value || '';
-        const nota = document.querySelector('.other-spec input[placeholder="Scrivi qui una nota testuale"]')?.value || '';
-        const categoria = document.querySelector('.other-spec input[placeholder="Scrivi qui la categoria"]')?.value || '';
-        lastTransactionData = {
-          ...data,
-          mittente: {
-            nome: mittenteNome,
-            email: mittenteEmail,
-            iban: mittenteIban,
-            citta: mittenteCitta
-          },
-          destinatario: {
-            nome: destNome,
-            email: destEmail,
-            iban: destIban,
-            citta: destCitta
-          },
-          clausola,
-          importo,
-          nota,
-          categoria,
-          stato: 'Completata',
-          data_transazione: data.date || new Date().toLocaleString()
-        };
-        hidePinModal();
-        showSuccessModal();
-      } else {
-        pinInput.style.display = '';
-        pinConfirmBtn.style.display = '';
-        pinCancelBtn.style.display = '';
-        pinModalTitle.textContent = 'Transizione iniziata';
-        pinModalMessage.textContent = 'Inserisci il PIN per autorizzare il bonifico';
-        pinError.textContent = data.detail || Object.values(data).join(' ');
-      }
-    })
-    .catch(() => {
-      pinLoader.style.display = 'none';
-      pinInput.style.display = '';
-      pinConfirmBtn.style.display = '';
-      pinCancelBtn.style.display = '';
-      pinModalTitle.textContent = 'Transizione iniziata';
-      pinModalMessage.textContent = 'Inserisci il PIN per autorizzare il bonifico';
-      pinError.textContent = 'Errore di rete.';
-    });
-  });
 
   pinCancelBtn.addEventListener('click', function() {
     hidePinModal();
@@ -191,7 +90,7 @@ function setupBonificoFlow(accessToken) {
   if (rubricaBtn) {
     rubricaBtn.addEventListener('click', function() {
       rubricaList.innerHTML = '<div style="padding:1rem;">Caricamento...</div>';
-      rubricaModal.style.display = 'flex';
+      showElement(rubricaModal);
       fetch('/api/accounts/contacts/', {
         headers: { 'Authorization': 'Bearer ' + accessToken },
         credentials: 'include',
@@ -209,12 +108,12 @@ function setupBonificoFlow(accessToken) {
                 <div style="font-size:0.95em;color:#666;">${contact.email || ''} ${contact.city ? '• ' + contact.city : ''}</div>
               `;
               div.addEventListener('click', function() {
-           
+
                 document.querySelector('.container-dati-destinatario input[placeholder="Inserisci il nome o entità"]').value = contact.name || '';
                 document.querySelector('.container-dati-destinatario input[placeholder="Inserisci l\'email"]').value = contact.email || '';
                 document.querySelector('.container-dati-destinatario input[placeholder="Inserisci l\'IBAN"]').value = contact.iban || '';
                 document.querySelector('.container-dati-destinatario input[placeholder="Inserisci la città di residenza"]').value = contact.city || '';
-                rubricaModal.style.display = 'none';
+                hideElement(rubricaModal);
               });
               rubricaList.appendChild(div);
             });
@@ -227,14 +126,9 @@ function setupBonificoFlow(accessToken) {
         });
     });
   }
-  if (rubricaCloseBtn) {
-    rubricaCloseBtn.addEventListener('click', function() {
-      rubricaModal.style.display = 'none';
-    });
-  }
   if (rubricaCloseXBtn) {
     rubricaCloseXBtn.addEventListener('click', function() {
-      rubricaModal.style.display = 'none';
+      hideElement(rubricaModal);
     });
   }
 
@@ -354,13 +248,41 @@ function generateAndPreviewPDF(data) {
   });
 }
 
-/* Al caricamento della pagina, recupera il token e popola i dati mittente e setup modale */
-document.addEventListener('DOMContentLoaded', function() {
-  const accessToken = localStorage.getItem('accessToken');
-  if (accessToken) {
-    fetchAndPopulateMittente(accessToken);
-    setupBonificoFlow(accessToken);
+document.addEventListener('DOMContentLoaded', () => {
+  if (!window.authUtils.requireAuth()) {
+    return; // User will be redirected to login
   }
+
+  // Recupera il token dall'authUtils
+  const accessToken = window.authUtils.getAccessToken();
+
+  /*  Funzione per recuperare e popolare i dati del mittente */
+  function fetchAndPopulateMittente() {
+    const mittenteNome = document.querySelector('input[name="mittente-nome"]');
+    const mittenteEmail = document.querySelector('input[name="mittente-email"]');
+    const mittenteIban = document.querySelector('input[name="mittente-iban"]');
+    const mittenteCitta = document.querySelector('input[name="mittente-citta"]');
+
+    fetch('/api/accounts/me/', {
+      credentials: 'include',
+      headers: {
+        'Authorization': 'Bearer ' + accessToken,
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          if (mittenteNome) mittenteNome.value = data.profile?.full_name || '';
+          if (mittenteEmail) mittenteEmail.value = data.email || '';
+          if (mittenteIban) mittenteIban.value = data.iban || '';
+          if (mittenteCitta) mittenteCitta.value = data.profile?.city || '';
+        }
+      });
+  }
+
+  fetchAndPopulateMittente();
+  setupBonificoFlow(accessToken);
 });
 
 

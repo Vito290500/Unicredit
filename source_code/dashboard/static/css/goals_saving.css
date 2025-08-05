@@ -24,6 +24,7 @@ body{
     display: flex;
     flex-direction: column;
     gap: 20px;
+    min-height: 380px;
 }
 .main-title{
   color: var(--blue-500)!important;
@@ -414,4 +415,16 @@ body{
 .versamento-modal .btn-confirm:hover {
   background-color: #45a049;
   transform: translateY(-1px);
+}
+
+.no-goals-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  color: #666;
+  font-size: 1.2rem;
+  text-align: center;
+  min-height: 300px; /* Ensure minimum height for proper centering */
 }

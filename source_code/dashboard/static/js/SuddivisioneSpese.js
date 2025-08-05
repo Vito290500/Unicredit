@@ -48,19 +48,22 @@ function showConfirmModal(message, onConfirm) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    if (!window.authUtils.requireAuth()) {
+        return; // User will be redirected to login
+    }
 
     let saldoDisponibile = 0;
     let categorie = [];
     let chart = null;
-    
-   
+
+
     loadSaldoDisponibile();
-    
+
 
     document.getElementById('aggiungi-categoria').addEventListener('click', aggiungiCategoria);
     document.getElementById('reset-allocazioni').addEventListener('click', resetAllocazioni);
     document.getElementById('salva-piano').addEventListener('click', salvaPiano);
-    
+
 
     document.querySelectorAll('.quick-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -68,31 +71,24 @@ document.addEventListener('DOMContentLoaded', function() {
             applicaPreset(preset);
         });
     });
-    
-  
+
+
     loadPianiSalvati();
-    
-  
+
+
     function loadSaldoDisponibile() {
-        fetch('/api/dashboard-data/', {
-            headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('accessToken'),
-                'Accept': 'application/json'
-            },
-            credentials: 'same-origin'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.account && data.account.balance) {
-                saldoDisponibile = parseFloat(data.account.balance);
-                updateUI();
-            }
-        })
-        .catch(err => {
-            console.error('Errore nel caricamento saldo:', err);
-        });
+        window.authUtils.authFetch('/api/dashboard-data/')
+            .then(({ response, data }) => {
+                if (response.ok && data.account && data.account.balance) {
+                    saldoDisponibile = parseFloat(data.account.balance);
+                    updateUI();
+                }
+            })
+            .catch(err => {
+                console.error('Errore nel caricamento saldo:', err);
+            });
     }
-    
+
     function aggiungiCategoria() {
         const nome = document.getElementById('categoria-nome').value.trim();
         const importo = parseFloat(document.getElementById('categoria-importo').value);

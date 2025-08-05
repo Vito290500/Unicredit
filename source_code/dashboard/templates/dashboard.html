@@ -23,7 +23,7 @@
 
     <h5>Bentornato,</h5>
     <h3>Nome Utente</h3>
-    <p>Ultimo accesso: data e ora</p>
+    <p id="last-login"></p>  
     
   </div>
 
@@ -331,7 +331,7 @@
             <circle cx="12" cy="12" r="3"/>
           </svg>
         </button>
-        <button class="card-action-btn primary">
+        <button class="card-action-btn primary" onclick="window.location.href='{% url 'estratto' %}'">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2L2 7l10 5 10-5-10-5z"/>
             <path d="M2 17l10 5 10-5"/>
@@ -405,7 +405,9 @@
 
   <!-- Import auth utilities first -->
   <script src="{% static 'js/auth-utils.js' %}"></script>
+  
   <!-- Import JS end of body -->
   <script src="{% static 'js/dashboard.js' %}"></script>
+  <script src="{% static 'js/navbar.js' %}"></script>
 </body>
 </html>

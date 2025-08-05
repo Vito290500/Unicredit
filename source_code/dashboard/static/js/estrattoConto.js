@@ -5,33 +5,37 @@ let estrattiCurrentPage = 1;
 let estrattiCurrentSearch = '';
 
 document.addEventListener('DOMContentLoaded', function() {
+  if (!window.authUtils.requireAuth()) {
+    return; // User will be redirected to login
+  }
+
   fetchEstratti();
+
   document.getElementById('estratti-search').addEventListener('input', function(e) {
     estrattiCurrentSearch = e.target.value.toLowerCase();
     renderEstrattiTable(filterEstratti(allEstratti, estrattiCurrentSearch), 1);
   });
+
 });
 
-function fetchEstratti(page = 1) {
-  fetch(API_ESTRATTI_URL, { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('accessToken') } })
-    .then(res => res.json())
-    .then(data => {
-      
-      let estratti = (data.results || data).map(e => ({
-        id: e.id,
-        mese: e.mese,
-        anno: e.anno,
-        saldo_iniziale: e.saldo_iniziale,
-        saldo_finale: e.saldo_finale,
-        data_creazione: e.data_creazione,
-        raw: e
-      }));
-      allEstratti = estratti.sort((a, b) => {
-        if (a.anno !== b.anno) return b.anno - a.anno;
-        return b.mese - a.mese;
-      });
-      renderEstrattiTable(filterEstratti(allEstratti, estrattiCurrentSearch), page);
+async function fetchEstratti(page = 1) {
+  const { response, data } = await window.authUtils.authFetch(API_ESTRATTI_URL);
+  if (response.ok && data) {
+    let estratti = (data.results || data).map(e => ({
+      id: e.id,
+      mese: e.mese,
+      anno: e.anno,
+      saldo_iniziale: e.saldo_iniziale,
+      saldo_finale: e.saldo_finale,
+      data_creazione: e.data_creazione,
+      raw: e
+    }));
+    allEstratti = estratti.sort((a, b) => {
+      if (a.anno !== b.anno) return b.anno - a.anno;
+      return b.mese - a.mese;
     });
+    renderEstrattiTable(filterEstratti(allEstratti, estrattiCurrentSearch), page);
+  }
 }
 
 function filterEstratti(estratti, search) {
@@ -88,30 +92,29 @@ function renderEstrattiTable(estratti, page) {
 }
 
 
-function fetchMovimentiMese(mese, anno) {
- 
+async function fetchMovimentiMese(mese, anno) {
+
   const startDate = `${anno}-${String(mese).padStart(2, '0')}-01`;
-  const lastDay = new Date(anno, mese, 0).getDate(); 
+  const lastDay = new Date(anno, mese, 0).getDate();
   const endDate = `${anno}-${String(mese).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-  
 
-  return fetch(`/api/transactions/?date_from=${startDate}&date_to=${endDate}`, {
-    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('accessToken') }
-  })
-  .then(res => res.json())
-  .then(data => {
 
-    const transactions = data.results || data;
-    return transactions.map(t => ({
-      id: t.id,
-      date: t.date,
-      amount: parseFloat(t.amount),
-      description: t.description || 'Movimento',
-      category: t.category?.name || 'Altro',
-      recipient_name: t.recipient_name || '',
-      recipient_iban: t.recipient_iban || ''
-    }));
-  });
+  const { response, data } = await window.authUtils.authFetch(`/api/transactions/?date_from=${startDate}&date_to=${endDate}`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch transactions');
+  }
+
+  const transactions = data.results || data;
+  return transactions.map(t => ({
+    id: t.id,
+    date: t.date,
+    amount: parseFloat(t.amount),
+    description: t.description || 'Movimento',
+    category: t.category?.name || 'Altro',
+    recipient_name: t.recipient_name || '',
+    recipient_iban: t.recipient_iban || ''
+  }));
 }
 
 function renderEstrattiPagination(total, page) {

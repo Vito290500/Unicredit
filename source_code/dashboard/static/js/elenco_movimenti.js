@@ -6,48 +6,84 @@ const PAGE_SIZE = 10;
 let allMovimenti = [];
 let currentPage = 1;
 let currentSearch = '';
+let selectedCategories = [];
 
-document.addEventListener('DOMContentLoaded', function() {
-  fetchMovimenti();
-  document.getElementById('movimenti-search').addEventListener('input', function(e) {
-    currentSearch = e.target.value.toLowerCase();
-    renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch), 1);
-  });
-});
-
-function fetchMovimenti(page = 1) {
-  Promise.all([
-    fetch(API_TRANSAZIONI_URL, { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('accessToken') } }).then(res => res.json()),
-    fetch(API_ACCREDITI_URL, { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('accessToken') } }).then(res => res.json())
-  ]).then(([transazioni, accrediti]) => {
-    let txs = (transazioni.results || []).map(tx => ({
-      tipo: 'Transazione',
-      id: tx.id,
-      nome: tx.transaction_name || tx.clausola || '-',
-      data: tx.date,
-      importo: tx.amount,
-      controparte: tx.destinatario_nome || '-',
-      categoria: tx.category_name || '-',
-      raw: tx
-    }));
-    let accs = (accrediti.results || []).map(acc => ({
-      tipo: 'Accredito',
-      id: acc.id,
-      nome: acc.description || acc.source || '-',
-      data: acc.date,
-      importo: acc.amount,
-      controparte: acc.source || '-',
-      categoria: acc.description || '-',
-      raw: acc
-    }));
-    allMovimenti = txs.concat(accs).sort((a, b) => new Date(b.data) - new Date(a.data));
-    renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch), page);
-  });
+function updateFilterBtn() {
+  const filterBtn = document.getElementById('movimenti-filter-btn');
+  const n = selectedCategories.length;
+  filterBtn.innerHTML = n > 0 ? `Filtra tipo <span style='background:var(--blue-500);color:#fff;border-radius:8px;padding:0 7px;margin-left:7px;font-size:0.98em;'>${n}</span> ▼` : 'Filtra tipo ▼';
 }
 
-function filterMovimenti(movimenti, search) {
-  if (!search) return movimenti;
-  return movimenti.filter(mov =>
+document.addEventListener('DOMContentLoaded', function() {
+  if (!window.authUtils.requireAuth()) {
+    return; // User will be redirected to login
+  }
+
+  async function fetchMovimenti(page = 1) {
+    const [
+      { response: resTx, data: transazioni },
+      { response: resAcc, data: accrediti }
+    ] = await Promise.all([
+      window.authUtils.authFetch(API_TRANSAZIONI_URL),
+      window.authUtils.authFetch(API_ACCREDITI_URL)
+    ]);
+
+    if (resTx.ok && resAcc.ok) {
+      let txs = (transazioni.results || []).map(tx => ({
+        tipo: 'Transazione',
+        id: tx.id,
+        nome: tx.transaction_name || tx.clausola || '-',
+        data: tx.date,
+        importo: tx.amount,
+        controparte: tx.destinatario_nome || '-',
+        categoria: tx.category_name || '-',
+        raw: tx
+      }));
+      let accs = (accrediti.results || []).map(acc => ({
+        tipo: 'Accredito',
+        id: acc.id,
+        nome: acc.description || acc.source || '-',
+        data: acc.date,
+        importo: acc.amount,
+        controparte: acc.source || '-',
+        categoria: acc.description || '-',
+        raw: acc
+      }));
+      allMovimenti = txs.concat(accs).sort((a, b) => new Date(b.data) - new Date(a.data));
+      extractCategories(allMovimenti);
+      renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch, selectedCategories), page);
+    }
+  }
+
+  fetchMovimenti();
+
+  document.getElementById('movimenti-search').addEventListener('input', function(e) {
+    currentSearch = e.target.value.toLowerCase();
+    renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch, selectedCategories), 1);
+  });
+
+  const filterBtn = document.getElementById('movimenti-filter-btn');
+  const filterMenu = document.getElementById('movimenti-filter-menu');
+  filterBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (filterMenu.innerHTML.trim() === '') return;
+    filterMenu.classList.toggle('show');
+  });
+  document.addEventListener('click', function(e) {
+    if (!filterMenu.contains(e.target) && e.target !== filterBtn) {
+      filterMenu.classList.remove('show');
+    }
+  });
+
+});
+
+function filterMovimenti(movimenti, search, categories) {
+  let filtered = movimenti;
+  if (categories && categories.length > 0) {
+    filtered = filtered.filter(mov => categories.includes(mov.categoria));
+  }
+  if (!search) return filtered;
+  return filtered.filter(mov =>
     (mov.nome && mov.nome.toLowerCase().includes(search)) ||
     (mov.controparte && mov.controparte.toLowerCase().includes(search)) ||
     (mov.categoria && mov.categoria.toLowerCase().includes(search)) ||
@@ -107,7 +143,7 @@ function renderMovimentiPagination(total, page) {
   prevBtn.addEventListener('click', () => {
     if (page > 1) {
       currentPage = page - 1;
-      renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch), currentPage);
+      renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch, selectedCategories), currentPage);
     }
   });
   pagDiv.appendChild(prevBtn);
@@ -117,7 +153,7 @@ function renderMovimentiPagination(total, page) {
     if (i === page) btn.classList.add('active');
     btn.addEventListener('click', () => {
       currentPage = i;
-      renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch), currentPage);
+      renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch, selectedCategories), currentPage);
     });
     pagDiv.appendChild(btn);
   }
@@ -127,7 +163,7 @@ function renderMovimentiPagination(total, page) {
   nextBtn.addEventListener('click', () => {
     if (page < totalPages) {
       currentPage = page + 1;
-      renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch), currentPage);
+      renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch, selectedCategories), currentPage);
     }
   });
   pagDiv.appendChild(nextBtn);
@@ -159,4 +195,25 @@ function generateAndPreviewPDF(data, tipo) {
   doc.setFontSize(10);
   doc.text('Questa ricevuta è stata generata automaticamente dal sistema FinHub.', 20, y+=15);
   window.open(doc.output('bloburl'), '_blank');
+}
+
+function extractCategories(movimenti) {
+  const menu = document.getElementById('movimenti-filter-menu');
+  const cats = Array.from(new Set(movimenti.map(mov => mov.categoria).filter(Boolean)));
+  menu.innerHTML = cats.map(c => `
+    <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;cursor:pointer;">
+      <input type="checkbox" class="movimenti-filter-checkbox" value="${c}">
+      <span>${c}</span>
+    </label>
+  `).join('');
+
+  menu.querySelectorAll('.movimenti-filter-checkbox').forEach(cb => {
+    cb.addEventListener('change', function() {
+      selectedCategories = Array.from(menu.querySelectorAll('.movimenti-filter-checkbox:checked')).map(cb => cb.value);
+      renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch, selectedCategories), 1);
+      updateFilterBtn();
+    });
+  });
+
+  updateFilterBtn();
 } 

@@ -9,8 +9,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         oggi = date.today()
-        mese = oggi.month - 1 or 12
-        anno = oggi.year if oggi.month > 1 else oggi.year - 1
+        # Calcolo mese e anno del mese precedente in modo robusto
+        if oggi.month == 1:
+            mese = 12
+            anno = oggi.year - 1
+        else:
+            mese = oggi.month - 1
+            anno = oggi.year
 
         for user in User.objects.all():
             if not EstrattoConto.objects.filter(user=user, mese=mese, anno=anno).exists():

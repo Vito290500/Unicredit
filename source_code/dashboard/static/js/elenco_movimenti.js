@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function filterMovimenti(movimenti, search, categories) {
   let filtered = movimenti;
   if (categories && categories.length > 0) {
-    filtered = filtered.filter(mov => categories.includes(mov.categoria));
+    filtered = filtered.filter(mov => categories.includes(mov.categoria?.trim().toLowerCase()));
   }
   if (!search) return filtered;
   return filtered.filter(mov =>
@@ -199,7 +199,7 @@ function generateAndPreviewPDF(data, tipo) {
 
 function extractCategories(movimenti) {
   const menu = document.getElementById('movimenti-filter-menu');
-  const cats = Array.from(new Set(movimenti.map(mov => mov.categoria).filter(Boolean)));
+  const cats = Array.from(new Set(movimenti.map(mov => mov.categoria?.trim().toLowerCase()).filter(Boolean)));
   menu.innerHTML = cats.map(c => `
     <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;cursor:pointer;">
       <input type="checkbox" class="movimenti-filter-checkbox" value="${c}">

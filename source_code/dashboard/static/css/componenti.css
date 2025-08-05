@@ -133,6 +133,7 @@ p{
     list-style: none;
     padding: 0.5rem 0;
     min-width: 180px;
+    display: none;
 }
 .dropdown li {
     margin: 0;

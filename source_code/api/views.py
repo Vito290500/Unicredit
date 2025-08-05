@@ -196,12 +196,100 @@ class CategoriaChartView(APIView):
         data = [d for d in data if d['category__name']]
         return Response(data)
     
+from datetime import date, datetime
+from calendar import monthrange
+from collections import defaultdict
+from django.db.models import Min, Max
+
+from django.db.models import Sum, Q
+from datetime import timedelta
+
 class EstrattoContoListAPIView(generics.ListAPIView):
     serializer_class = EstrattoContoSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        return EstrattoConto.objects.filter(user=self.request.user).order_by('-anno', '-mese')
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        from transactions.models import Transaction
+        from accounts.models import Accredito, BankAccount
+
+        # Recupera il saldo corrente dal BankAccount dell'utente
+        bank_account = BankAccount.objects.filter(user=user).first()
+        if not bank_account:
+            return Response([])
+        saldo_corrente = bank_account.balance
+
+        # Recupera tutte le transazioni e accreditamenti dell'utente ordinate per data
+        transactions = Transaction.objects.filter(account__user=user).order_by('date')
+        accreditamenti = Accredito.objects.filter(account__user=user).order_by('date')
+
+        if not transactions.exists() and not accreditamenti.exists():
+            return Response([])
+
+        # Trova il primo e l'ultimo mese/anno con movimenti o accreditamenti
+        first_date_trans = transactions.first().date if transactions.exists() else None
+        first_date_acc = accreditamenti.first().date if accreditamenti.exists() else None
+
+        first_date_candidates = [d for d in [first_date_trans, first_date_acc] if d is not None]
+        first_date = min(first_date_candidates) if first_date_candidates else None
+
+        last_date_trans = transactions.last().date if transactions.exists() else None
+        last_date_acc = accreditamenti.last().date if accreditamenti.exists() else None
+
+        last_date_candidates = [d for d in [last_date_trans, last_date_acc] if d is not None]
+        last_date = max(last_date_candidates) if last_date_candidates else None
+
+        if first_date is None or last_date is None:
+            return Response([])
+
+        # Costruisci lista di mesi/anni da first_date a last_date
+        current_year = first_date.year
+        current_month = first_date.month
+        end_year = last_date.year
+        end_month = last_date.month
+
+        mesi_anni = []
+        while (current_year < end_year) or (current_year == end_year and current_month <= end_month):
+            mesi_anni.append((current_year, current_month))
+            if current_month == 12:
+                current_month = 1
+                current_year += 1
+            else:
+                current_month += 1
+
+        estratti = []
+
+        saldo_corrente_mese = saldo_corrente
+
+        for anno, mese in mesi_anni[::-1]:  # dal mese più recente al più vecchio
+            last_day = monthrange(anno, mese)[1]
+
+            # Somma movimenti del mese (uscite)
+            totale_movimenti_mese = transactions.filter(date__year=anno, date__month=mese).aggregate(total=Sum('amount'))['total'] or 0
+
+            # Somma accreditamenti del mese (entrate)
+            totale_accreditamenti_mese = accreditamenti.filter(date__year=anno, date__month=mese).aggregate(total=Sum('amount'))['total'] or 0
+
+            saldo_iniziale = saldo_corrente_mese - totale_accreditamenti_mese + totale_movimenti_mese
+            saldo_finale = saldo_corrente_mese
+
+            # Data creazione è il primo giorno del mese successivo
+            if mese == 12:
+                data_creazione = datetime(anno + 1, 1, 1)
+            else:
+                data_creazione = datetime(anno, mese + 1, 1)
+
+            estratti.append({
+                'mese': mese,
+                'anno': anno,
+                'saldo_iniziale': saldo_iniziale,
+                'saldo_finale': saldo_finale,
+                'data_creazione': data_creazione.isoformat()
+            })
+
+            saldo_corrente_mese = saldo_iniziale
+
+        return Response(estratti)
     
 class MovimentiMensiliAPIView(APIView):
     permission_classes = [IsAuthenticated]

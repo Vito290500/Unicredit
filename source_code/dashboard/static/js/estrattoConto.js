@@ -63,28 +63,25 @@ function renderEstrattiTable(estratti, page) {
       <td>${e.anno}</td>
       <td>€ ${Number(e.saldo_iniziale).toLocaleString('it-IT', {minimumFractionDigits: 2})}</td>
       <td>€ ${Number(e.saldo_finale).toLocaleString('it-IT', {minimumFractionDigits: 2})}</td>
-      <td>${formatDateTime(e.data_creazione)}</td>
+      <td>${e.data_creazione ? formatDateTime(e.data_creazione) : '-'}</td>
       <td><button class="scarica-btn" data-mese="${e.mese}" data-anno="${e.anno}" data-estratto='${JSON.stringify(e)}'>Scarica</button></td>
     `;
     tbody.appendChild(tr);
   }
   renderEstrattiPagination(totalCount, page);
 
-
   document.querySelectorAll('.scarica-btn').forEach((btn) => {
     btn.addEventListener('click', function() {
       const mese = parseInt(btn.getAttribute('data-mese'));
       const anno = parseInt(btn.getAttribute('data-anno'));
       const estrattoData = JSON.parse(btn.getAttribute('data-estratto'));
-      
-    
+
       fetchMovimentiMese(mese, anno)
         .then(movimenti => {
           generateEstrattoPDFCompleto(estrattoData, movimenti);
         })
         .catch(err => {
           console.error('Errore nel caricamento dei movimenti:', err);
-    
           generateEstrattoPDFCompleto(estrattoData, []);
         });
     });
@@ -98,7 +95,6 @@ async function fetchMovimentiMese(mese, anno) {
   const lastDay = new Date(anno, mese, 0).getDate();
   const endDate = `${anno}-${String(mese).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-
   const { response, data } = await window.authUtils.authFetch(`/api/transactions/?date_from=${startDate}&date_to=${endDate}`);
 
   if (!response.ok) {
@@ -106,7 +102,14 @@ async function fetchMovimentiMese(mese, anno) {
   }
 
   const transactions = data.results || data;
-  return transactions.map(t => ({
+
+  // Filter transactions to ensure they fall within the specified month and year
+  const filteredTransactions = transactions.filter(t => {
+    const tDate = new Date(t.date);
+    return tDate.getFullYear() === anno && (tDate.getMonth() + 1) === mese;
+  });
+
+  return filteredTransactions.map(t => ({
     id: t.id,
     date: t.date,
     amount: parseFloat(t.amount),

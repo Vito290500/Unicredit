@@ -69,10 +69,9 @@ def create_user_accounts(user):
             user=user,
             iban=account_iban,
             name=f"Conto {user.email.split('@')[0]}",
-            balance=0,
             currency='EUR'
         )
-        
+
         profile = Profile.objects.create(
             account=account,
             full_name='',
@@ -82,7 +81,7 @@ def create_user_accounts(user):
             city='',
             postal_code=''
         )
-        
+
         bank_account_iban = generate_iban()
         bank_account = BankAccount.objects.create(
             user=user,
@@ -91,7 +90,7 @@ def create_user_accounts(user):
             balance=0,
             currency='EUR'
         )
-        
+
         card_data = generate_card_data()
         Card.objects.create(
             account=bank_account,
@@ -106,11 +105,10 @@ def create_user_accounts(user):
             holder_name=profile.full_name or card_data['holder_name'],
             active=True
         )
-        
+
         logger.info(f"✅ Created account instances for user {user.email}")
-        
     except Exception as e:
-        logger.error(f"❌ Error creating account instances for user {user.email}: {str(e)}")
+        logger.error(f"❌ Error creating account instances for user {user.email}: {e}")
         raise
 
 class CustomUserViewSet(DjoserUserViewSet):

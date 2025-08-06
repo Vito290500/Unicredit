@@ -18,7 +18,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+async function fetchCurrentBalance() {
+  const { response, data } = await window.authUtils.authFetch('/api/accounts/');
+  if (response.ok && data && data.length > 0) {
+    // Prendo il balance del primo conto bancario
+    return parseFloat(data[0].balance) || 0;
+  }
+  return 0;
+}
+
 async function fetchEstratti(page = 1) {
+  // Recupera il balance attuale
+  const saldoAttuale = await fetchCurrentBalance();
+
   const { response, data } = await window.authUtils.authFetch(API_ESTRATTI_URL);
   if (response.ok && data) {
     let estratti = (data.results || data).map(e => ({
@@ -30,12 +42,65 @@ async function fetchEstratti(page = 1) {
       data_creazione: e.data_creazione,
       raw: e
     }));
+
+    // Ricalcolo i saldi iniziali e finali usando il balance attuale
+    await ricalcolaSaldiEstratti(estratti, saldoAttuale);
+
     allEstratti = estratti.sort((a, b) => {
       if (a.anno !== b.anno) return b.anno - a.anno;
       return b.mese - a.mese;
     });
     renderEstrattiTable(filterEstratti(allEstratti, estrattiCurrentSearch), page);
   }
+}
+
+async function ricalcolaSaldiEstratti(estratti, saldoAttuale) {
+  let saldoFinale = saldoAttuale;
+
+  // Ordina gli estratti conto dal più recente al più vecchio (anno, mese decrescente)
+  estratti.sort((a, b) => {
+    if (a.anno !== b.anno) return b.anno - a.anno;
+    return b.mese - a.mese;
+  });
+
+  for (let i = 0; i < estratti.length; i++) {
+    const estratto = estratti[i];
+
+    // Se non ci sono movimenti nel raw, li recupero
+    if (!estratto.raw.transactions || estratto.raw.transactions.length === 0) {
+      try {
+        const movimenti = await fetchMovimentiMese(estratto.mese, estratto.anno);
+        estratto.raw.transactions = movimenti;
+      } catch (error) {
+        console.error('Errore nel recupero movimenti per estratto:', estratto, error);
+        estratto.raw.transactions = [];
+      }
+    }
+
+    // Calcolo somme positive e negative
+    let sommaPositiva = 0;
+    let sommaNegativa = 0;
+    estratto.raw.transactions.forEach(t => {
+      const amount = parseFloat(t.amount) || 0;
+      if (amount > 0) sommaPositiva += amount;
+      else sommaNegativa += amount;
+    });
+
+    // saldo finale del mese corrente
+    estratto.saldo_finale = saldoFinale;
+
+    // saldo iniziale = saldo finale + somme negative - somme positive
+    estratto.saldo_iniziale = saldoFinale + sommaNegativa - sommaPositiva;
+
+    // saldo finale per il mese precedente è il saldo iniziale di questo mese
+    saldoFinale = estratto.saldo_iniziale;
+  }
+
+  // Riordina per visualizzazione dal più vecchio al più recente
+  estratti.sort((a, b) => {
+    if (a.anno !== b.anno) return a.anno - b.anno;
+    return a.mese - b.mese;
+  });
 }
 
 function filterEstratti(estratti, search) {
@@ -90,24 +155,31 @@ function renderEstrattiTable(estratti, page) {
 
 
 async function fetchMovimentiMese(mese, anno) {
+  console.log(`Fetching movimenti for month: ${mese}, year: ${anno}`);
 
   const startDate = `${anno}-${String(mese).padStart(2, '0')}-01`;
-  const lastDay = new Date(anno, mese, 0).getDate();
+  // Correggo il calcolo dell'ultimo giorno del mese aggiungendo 1 a mese per new Date
+  const lastDay = new Date(anno, mese, 0).getDate(); // mese + 1 per new Date
   const endDate = `${anno}-${String(mese).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
+  // Correggo la query string rimuovendo &amp; e mettendo &
   const { response, data } = await window.authUtils.authFetch(`/api/transactions/?date_from=${startDate}&date_to=${endDate}`);
 
   if (!response.ok) {
+    console.error('Failed to fetch transactions for month:', mese, 'year:', anno);
     throw new Error('Failed to fetch transactions');
   }
 
   const transactions = data.results || data;
 
-  // Filter transactions to ensure they fall within the specified month and year
   const filteredTransactions = transactions.filter(t => {
     const tDate = new Date(t.date);
-    return tDate.getFullYear() === anno && (tDate.getMonth() + 1) === mese;
+    const isInMonth = tDate.getFullYear() === anno && (tDate.getMonth() + 1) === mese;
+    console.log(`Transaction id: ${t.id}, date: ${t.date}, isInMonth: ${isInMonth}`);
+    return isInMonth;
   });
+
+  console.log(`Found ${filteredTransactions.length} transactions for month: ${mese}, year: ${anno}`);
 
   return filteredTransactions.map(t => ({
     id: t.id,
@@ -167,6 +239,9 @@ function formatDateTime(dt) {
 }
 
 function generateEstrattoPDFCompleto(estratto, movimenti) {
+  console.log('Generating PDF for estratto:', estratto);
+  console.log('Movimenti passed to PDF:', movimenti);
+
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -175,46 +250,46 @@ function generateEstrattoPDFCompleto(estratto, movimenti) {
 
   doc.setFontSize(18);
   doc.text(`Estratto Conto Mensile`, pageWidth/2, y, {align: 'center'});
-  
+
   y += 20;
   doc.setFontSize(12);
   doc.text(`Mese: ${String(estratto.mese).padStart(2, '0')}/${estratto.anno}`, 20, y);
-  
+
   y += 10;
   doc.text(`Saldo Iniziale: € ${Number(estratto.saldo_iniziale).toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 20, y);
-  
+
   y += 10;
   doc.text(`Saldo Finale: € ${Number(estratto.saldo_finale).toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 20, y);
-  
+
   y += 10;
   doc.text(`Creato il: ${formatDateTime(estratto.data_creazione)}`, 20, y);
-  
+
   y += 20;
 
   if (movimenti && movimenti.length > 0) {
     doc.setFontSize(14);
     doc.text('Movimenti del Mese:', 20, y);
     y += 15;
-    
+
 
     doc.setFontSize(10);
     doc.text('Data', 20, y);
     doc.text('Descrizione', 50, y);
     doc.text('Categoria', 120, y);
     doc.text('Importo', 160, y);
-    
+
     y += 5;
 
     doc.line(20, y, pageWidth - 20, y);
     y += 10;
-    
+
 
     movimenti.forEach((mov, index) => {
 
       if (y > pageHeight - 30) {
         doc.addPage();
         y = 20;
- 
+
         doc.setFontSize(10);
         doc.text('Data', 20, y);
         doc.text('Descrizione', 50, y);
@@ -224,35 +299,35 @@ function generateEstrattoPDFCompleto(estratto, movimenti) {
         doc.line(20, y, pageWidth - 20, y);
         y += 10;
       }
-      
+
       const dataFormatted = new Date(mov.date).toLocaleDateString('it-IT');
       const importoFormatted = `€ ${Number(mov.amount).toLocaleString('it-IT', {minimumFractionDigits: 2})}`;
       const descrizione = mov.description && mov.description.length > 25 ? mov.description.substring(0, 25) + '...' : (mov.description || 'N/A');
       const categoria = mov.category && mov.category.length > 15 ? mov.category.substring(0, 15) + '...' : (mov.category || 'N/A');
-      
+
       doc.text(dataFormatted, 20, y);
       doc.text(descrizione, 50, y);
       doc.text(categoria, 120, y);
-      
+
       if (mov.amount >= 0) {
-        doc.setTextColor(0, 128, 0); 
+        doc.setTextColor(0, 128, 0);
       } else {
-        doc.setTextColor(255, 0, 0); 
+        doc.setTextColor(255, 0, 0);
       }
       doc.text(importoFormatted, 160, y);
-      doc.setTextColor(0, 0, 0); 
-      
+      doc.setTextColor(0, 0, 0);
+
       y += 8;
     });
-    
+
     y += 10;
-    
+
     const totaleEntrate = movimenti.filter(m => m.amount > 0).reduce((sum, m) => sum + m.amount, 0);
     const totaleUscite = movimenti.filter(m => m.amount < 0).reduce((sum, m) => sum + Math.abs(m.amount), 0);
-    
+
     doc.line(20, y, pageWidth - 20, y);
     y += 10;
-    
+
     doc.setFontSize(11);
     doc.text(`Totale Entrate: € ${totaleEntrate.toLocaleString('it-IT', {minimumFractionDigits: 2})}`, 20, y);
     y += 8;
@@ -262,12 +337,12 @@ function generateEstrattoPDFCompleto(estratto, movimenti) {
   } else {
     doc.text('Nessun movimento registrato per questo mese.', 20, y);
   }
-  
+
 
   y = pageHeight - 20;
   doc.setFontSize(8);
   doc.text('Questo estratto conto è stato generato automaticamente dal sistema FinHub.', pageWidth/2, y, {align: 'center'});
-  
+
 
   window.open(doc.output('bloburl'), '_blank');
 }

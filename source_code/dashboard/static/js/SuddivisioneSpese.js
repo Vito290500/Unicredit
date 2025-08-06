@@ -275,13 +275,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateChart() {
         const ctx = document.getElementById('suddivisioneChart').getContext('2d');
-        
+
         if (chart) {
             chart.destroy();
         }
-        
+
         if (categorie.length === 0) {
-   
+
             chart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -302,18 +302,18 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             return;
         }
-        
+
         const residuo = saldoDisponibile - getTotalAllocato();
         const labels = [...categorie.map(cat => cat.nome)];
         const data = [...categorie.map(cat => cat.importo)];
         const colors = [...categorie.map(cat => cat.colore)];
-        
+
         if (residuo > 0) {
             labels.push('Non allocato');
             data.push(residuo);
             colors.push('#ecf0f1');
         }
-        
+
         chart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-        
+
         updateCustomLegend(labels, data, colors);
     }
     

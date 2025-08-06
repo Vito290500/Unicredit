@@ -119,9 +119,14 @@ class CategorySerializer(serializers.ModelSerializer):
 class CategoryListView(ListAPIView):
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
-    
+    pagination_class = None
+
     def get_queryset(self):
         return Category.objects.all()
+
+    def get_ordering(self):
+        # Disable ordering to avoid FieldError
+        return []
 
 class DashboardStatsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -213,20 +218,17 @@ class EstrattoContoListAPIView(generics.ListAPIView):
         from transactions.models import Transaction
         from accounts.models import Accredito, BankAccount
 
-        # Recupera il saldo corrente dal BankAccount dell'utente
         bank_account = BankAccount.objects.filter(user=user).first()
         if not bank_account:
             return Response([])
         saldo_corrente = bank_account.balance
 
-        # Recupera tutte le transazioni e accreditamenti dell'utente ordinate per data
         transactions = Transaction.objects.filter(account__user=user).order_by('date')
         accreditamenti = Accredito.objects.filter(account__user=user).order_by('date')
 
         if not transactions.exists() and not accreditamenti.exists():
             return Response([])
 
-        # Trova il primo e l'ultimo mese/anno con movimenti o accreditamenti
         first_date_trans = transactions.first().date if transactions.exists() else None
         first_date_acc = accreditamenti.first().date if accreditamenti.exists() else None
 
@@ -242,7 +244,6 @@ class EstrattoContoListAPIView(generics.ListAPIView):
         if first_date is None or last_date is None:
             return Response([])
 
-        # Costruisci lista di mesi/anni da first_date a last_date
         current_year = first_date.year
         current_month = first_date.month
         end_year = last_date.year
@@ -259,39 +260,39 @@ class EstrattoContoListAPIView(generics.ListAPIView):
 
         estratti = []
 
-        saldo_corrente_mese = saldo_corrente
+        saldo_iniziale_mese_successivo = saldo_corrente
 
-        for anno, mese in mesi_anni[::-1]:  # dal mese più recente al più vecchio
+        for anno, mese in mesi_anni[::-1]:
             last_day = monthrange(anno, mese)[1]
 
-            # Somma movimenti del mese (uscite)
-            totale_movimenti_mese = transactions.filter(date__year=anno, date__month=mese).aggregate(total=Sum('amount'))['total'] or 0
+            totale_movimenti_positivi = transactions.filter(
+                date__year=anno, date__month=mese, amount__gt=0
+            ).aggregate(total=Sum('amount'))['total'] or 0
 
-            # Somma accreditamenti del mese (entrate)
-            totale_accreditamenti_mese = accreditamenti.filter(date__year=anno, date__month=mese).aggregate(total=Sum('amount'))['total'] or 0
+            totale_movimenti_negativi = transactions.filter(
+                date__year=anno, date__month=mese, amount__lt=0
+            ).aggregate(total=Sum('amount'))['total'] or 0
 
-            saldo_iniziale = saldo_corrente_mese - totale_accreditamenti_mese + totale_movimenti_mese
-            saldo_finale = saldo_corrente_mese
+            totale_accreditamenti = accreditamenti.filter(
+                date__year=anno, date__month=mese
+            ).aggregate(total=Sum('amount'))['total'] or 0
 
-            # Data creazione è il primo giorno del mese successivo
-            if mese == 12:
-                data_creazione = datetime(anno + 1, 1, 1)
-            else:
-                data_creazione = datetime(anno, mese + 1, 1)
+            saldo_finale = saldo_iniziale_mese_successivo
+            saldo_iniziale = saldo_finale - totale_movimenti_positivi + totale_movimenti_negativi
 
             estratti.append({
                 'mese': mese,
                 'anno': anno,
                 'saldo_iniziale': saldo_iniziale,
                 'saldo_finale': saldo_finale,
-                'data_creazione': data_creazione.isoformat()
+                'data_creazione': datetime(anno, mese, 1).isoformat()
             })
 
-            saldo_corrente_mese = saldo_iniziale
+            saldo_iniziale_mese_successivo = saldo_iniziale
 
         return Response(estratti)
     
-class MovimentiMensiliAPIView(APIView):
+class MovimentiMensiliAPIView(APIView): 
     permission_classes = [IsAuthenticated]
 
     def get(self, request, estratto_id):

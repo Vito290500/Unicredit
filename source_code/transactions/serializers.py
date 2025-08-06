@@ -184,9 +184,10 @@ class TransferSerializer(serializers.Serializer):
                 stato='Completata',
                 id_transazione='',
             )
-        
+
             from_account.balance -= amount
             to_account.balance += amount
+
             from_account.save()
             to_account.save()
         return {'tx_out': tx_out, 'tx_in': tx_in}

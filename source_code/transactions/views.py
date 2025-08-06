@@ -36,7 +36,39 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
         return TransactionSerializer
 
     def get_queryset(self):
-        return super().get_queryset().filter(account__user=self.request.user)
+        from django.utils.dateparse import parse_date
+
+        qs = super().get_queryset().filter(account__user=self.request.user)
+
+        date_from = self.request.query_params.get('date_from')
+        date_to = self.request.query_params.get('date_to')
+
+        if date_from:
+            date_from_parsed = parse_date(date_from)
+            if date_from_parsed:
+                qs = qs.filter(date__gte=date_from_parsed)
+
+        if date_to:
+            date_to_parsed = parse_date(date_to)
+            if date_to_parsed:
+                qs = qs.filter(date__lte=date_to_parsed)
+
+        # Log delle transazioni filtrate
+        print(f"Filtered transactions count: {qs.count()}")
+
+        # Log delle transazioni per mese
+        from collections import defaultdict
+        transactions_per_month = defaultdict(int)
+        for t in qs:
+            month = t.date.month
+            transactions_per_month[month] += 1
+        print("Transactions per month:")
+        for month, count in transactions_per_month.items():
+            print(f"Month: {month}, Count: {count}")
+
+        for t in qs[:10]:  # stampo solo le prime 10 per non sovraccaricare
+            print(f"Transaction: id={t.id}, date={t.date}, amount={t.amount}")
+        return qs
 
 class TransferView(APIView):
     permission_classes = [IsAuthenticated]

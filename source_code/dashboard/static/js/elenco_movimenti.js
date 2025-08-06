@@ -215,5 +215,4 @@ function extractCategories(movimenti) {
     });
   });
 
-  updateFilterBtn();
-} 
+  update} 

@@ -47,7 +47,8 @@ function setupBonificoFlow(accessToken) {
   const rubricaBtn = document.getElementById('rubrica-btn');
   const rubricaModal = document.getElementById('rubrica-modal');
   const rubricaList = document.getElementById('rubrica-list');
-  const rubricaCloseBtn = document.getElementById('rubrica-close-btn');
+  const rubricaCloseBtn = document.getElementById('rubrica-close-x-btn');
+  const closeSuccessModalBtn = document.getElementById('close-success-modal-btn');
 
   if (!form) return;
 
@@ -68,6 +69,14 @@ function setupBonificoFlow(accessToken) {
   // Nascondi la modale PIN
   function hidePinModal() {
     pinModal.style.display = 'none';
+  }
+
+  if (closeSuccessModalBtn) {
+    closeSuccessModalBtn.addEventListener('click', () => {
+      if (successModal) {
+        successModal.style.display = 'none';
+      }
+    });
   }
 
   // Mostra la modale di successo

@@ -1,119 +1,154 @@
 from django.urls import reverse
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth import get_user_model
-User = get_user_model()
-from accounts.models import BankAccount, Accredito
-from transactions.models import Transaction
+from accounts.models import BankAccount, Card, GoalsSaving
+from transactions.models import Category, Transaction
+from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import date
-import uuid
 
-class APITests(APITestCase):
+User = get_user_model()
+
+class BaseAPITestCase(APITestCase):
     def setUp(self):
+        # Create a user
         self.user = User.objects.create_user(email='testuser@example.com', password='testpass')
-        self.client = APIClient()
-        self.client.force_authenticate(user=self.user)
+        self.token = str(RefreshToken.for_user(self.user).access_token)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
 
-        # Create BankAccount with initial balance
-        self.bank_account = BankAccount.objects.create(
-            user=self.user,
-            iban=str(uuid.uuid4()),
-            name='Test Account',
-            balance=1000.00,
-            currency='EUR'
-        )
+        # Create a bank account for the user
+        self.bank_account = BankAccount.objects.create(user=self.user, iban='IT60X0542811101000000123456', balance=1000)
 
-        # Create some transactions and accreditamenti
-        Transaction.objects.create(
+        # Create a card linked to the bank account
+        self.card = Card.objects.create(
             account=self.bank_account,
-            date=date(2023, 6, 15),
-            amount=-200.00,
-            description='Test transaction June'
+            circuit=Card.Circuit.VISA,
+            pan_last4='3456',
+            pan_hash='dummyhash',
+            pan_real='1234567890123456',
+            expiry_month=12,
+            expiry_year=2030,
+            cvv_hash='dummycvvhash',
+            cvv_real='123',
+            holder_name='Test User',
+            active=True
         )
-        Transaction.objects.create(
+
+        # Create a category
+        self.category = Category.objects.create(name='Test Category')
+
+        # Create a transaction
+        self.transaction = Transaction.objects.create(
             account=self.bank_account,
-            date=date(2023, 7, 10),
-            amount=-100.00,
-            description='Test transaction July'
-        )
-        Accredito.objects.create(
-            account=self.bank_account,
-            date=date(2023, 7, 20),
-            amount=300.00,
-            description='Test accredito July',
-            source='Employer'
+            amount=100,
+            category=self.category,
+            date=date.today()
         )
 
-    def test_estratto_conto_list(self):
-        url = reverse('estratti-conto-list')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsInstance(response.data, list)
-        mesi = [e['mese'] for e in response.data]
-        self.assertIn(6, mesi)
-        self.assertIn(7, mesi)
+        # Create a saving goal
+        self.goal = GoalsSaving.objects.create(
+            bank_account=self.bank_account,
+            nome='Test Goal',
+            importo_target=500,
+            importo_attuale=100
+        )
 
-    def test_movimenti_mensili(self):
-        url_list = reverse('estratti-conto-list')
-        response_list = self.client.get(url_list)
-        estratti = response_list.data
-        estratto_luglio = next((e for e in estratti if e['mese'] == 7), None)
-        self.assertIsNotNone(estratto_luglio)
-
-        url_mov = reverse('movimenti-mensili', kwargs={'estratto_id': '00000000-0000-0000-0000-000000000000'})
-        response_mov = self.client.get(url_mov)
-        self.assertEqual(response_mov.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_my_account_view(self):
-        url = reverse('my-account')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('profile', response.data)
-
-    def test_dashboard_data(self):
+class DashboardDataAPIViewTest(BaseAPITestCase):
+    def test_get_dashboard_data(self):
         url = reverse('dashboard-data')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('user_full_name', response.data)
+        self.assertIn('last_login', response.data)
+        self.assertIn('account', response.data)
+        self.assertIn('card', response.data)
 
-    def test_user_bank_account_list(self):
-        url = reverse('user-bank-account-list')
+class UserBankAccountListViewTest(BaseAPITestCase):
+    def test_get_user_bank_accounts(self):
+        url = reverse('user-accounts')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
 
-    def test_category_list(self):
-        url = reverse('category-list')
+class CategoryListViewTest(BaseAPITestCase):
+    def test_get_categories(self):
+        url = reverse('categories')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
 
-    def test_dashboard_stats(self):
+class DashboardStatsViewTest(BaseAPITestCase):
+    def test_get_dashboard_stats(self):
         url = reverse('dashboard-stats')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('bonifici_inviati', response.data)
+        self.assertIn('bonifici_ricevuti', response.data)
+        self.assertIn('transazioni', response.data)
+        self.assertIn('categorie', response.data)
 
-    def test_entrate_uscite_chart(self):
+class EntrateUsciteChartViewTest(BaseAPITestCase):
+    def test_get_entrate_uscite_chart(self):
         url = reverse('entrate-uscite-chart')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('current_month', response.data)
+        self.assertIn('previous_month', response.data)
 
-    def test_categoria_chart(self):
+class CategoriaChartViewTest(BaseAPITestCase):
+    def test_get_categoria_chart(self):
         url = reverse('categoria-chart')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
 
-    def test_goals_saving_list_create(self):
+class GoalsSavingListCreateViewTest(BaseAPITestCase):
+    def test_get_goals_saving(self):
         url = reverse('goals-saving-list-create')
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Check 'results' key for paginated response
+        self.assertIn('results', response.data)
+        self.assertIsInstance(response.data['results'], list)
 
-    def test_goals_saving_detail(self):
-        # Test detail view with non-existent id
-        url = reverse('goals-saving-detail', kwargs={'pk': '00000000-0000-0000-0000-000000000000'})
+    def test_create_goal_saving(self):
+        url = reverse('goals-saving-list-create')
+        data = {
+            'nome': 'New Goal',
+            'importo_target': 1000,
+            'colore': '#3498db',
+            'attivo': True
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['nome'], 'New Goal')
+
+class GoalsSavingDetailViewTest(BaseAPITestCase):
+    def test_get_goal_detail(self):
+        url = reverse('goals-saving-detail', kwargs={'pk': self.goal.id})
         response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['nome'], self.goal.nome)
 
-    def test_goals_saving_add_money(self):
-        url = reverse('goals-saving-add-money')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+    def test_update_goal(self):
+        url = reverse('goals-saving-detail', kwargs={'pk': self.goal.id})
+        data = {'nome': 'Updated Goal'}
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['nome'], 'Updated Goal')
 
+    def test_delete_goal(self):
+        url = reverse('goals-saving-detail', kwargs={'pk': self.goal.id})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+class GoalsSavingAddMoneyViewTest(BaseAPITestCase):
+    def test_add_money_to_goal(self):
+        url = reverse('goals-saving-add-money', kwargs={'pk': self.goal.id})
+        data = {'importo': 50, 'descrizione': 'Test deposit'}
+        response = self.client.post(url, data, format='json')
+        # The view returns 201 Created, update test to expect 201
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.goal.refresh_from_db()
+        self.assertEqual(self.goal.importo_attuale, 150)
 

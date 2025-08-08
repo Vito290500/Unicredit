@@ -397,25 +397,6 @@ body{
     background: #c0392b;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .main-content {
-        grid-template-columns: 1fr;
-    }
-    
-    .add-category-form {
-        grid-template-columns: 1fr;
-    }
-    
-    .chart-header {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .save-section {
-        flex-direction: column;
-    }
-}
 
 /* Animazioni */
 @keyframes slideIn {
@@ -447,8 +428,6 @@ body{
 #categorie-container::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
-
-
 
 .custom-modal {
     position: fixed;

@@ -1,5 +1,5 @@
 """
-Users Views customization
+Configurazione views per users app
 """
 
 from django.db import transaction
@@ -9,23 +9,18 @@ from django.conf import settings
 from djoser import utils
 from django.contrib.auth.tokens import default_token_generator
 from accounts.models import Accounts, Profile, BankAccount, Card
-import uuid
-import hashlib
-import random
-import string
-import datetime
+import uuid, hashlib, random, string, datetime, logging
 
 from rest_framework import status
 from rest_framework.response import Response
 from users.email import ActivationEmail
 
-import logging
 logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
 def generate_iban():
-    """Generate a fake, formatted Italian IBAN"""
+    """funzione per generare un iba fittizio"""
     country_code = "IT"
     check_digits = "60"
     abi = "05428"
@@ -35,7 +30,7 @@ def generate_iban():
     return ' '.join([iban[i:i+4] for i in range(0, len(iban), 4)])
 
 def generate_card_data():
-    """Generate fake card data for demo purposes"""
+    """funzione per generare i dati della carta del conto"""
     pan_real = ''.join(random.choices(string.digits, k=16))
     pan_last4 = pan_real[-4:]
     pan_hash = hashlib.sha256(pan_real.encode()).hexdigest()
@@ -62,7 +57,7 @@ def generate_card_data():
     }
 
 def create_user_accounts(user):
-    """Create all necessary account instances for a new user"""
+    """Funzione per la creazione dell'istanza dell'utente"""
     try:
         account_iban = generate_iban()
         account = Accounts.objects.create(
@@ -112,11 +107,9 @@ def create_user_accounts(user):
         raise
 
 class CustomUserViewSet(DjoserUserViewSet):
-    """Class for overwrite Djoser create()."""
 
     @transaction.atomic
     def create(self, request, *args, **kwargs):
-        """atomic function for handling create email."""
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -149,8 +142,7 @@ class CustomUserViewSet(DjoserUserViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_email_context(self, user):
-        """Function that retrive email context."""
-        
+   
         context = {
             "user": user,
             "domain": settings.DJOSER["DOMAIN"],

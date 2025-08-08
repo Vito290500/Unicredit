@@ -1,8 +1,8 @@
+/* JS PER LA GESTIONE DEI GOAL SAVING */
+
 const API_URL = '/api/goals-saving/';
 
 
-
-// --- FUNZIONI UTILITY ---
 function showSpinner() {
   document.getElementById('spinner-overlay').style.display = 'flex';
 }
@@ -11,7 +11,7 @@ function hideSpinner() {
   document.getElementById('spinner-overlay').style.display = 'none';
 }
 
-// --- MODALE CUSTOM GENERICA ---
+
 function showModal(message, {actions = [{text: "OK", callback: null, className: ""}]} = {}) {
   const modal = document.getElementById('custom-modal');
   const msgDiv = document.getElementById('custom-modal-message');
@@ -34,7 +34,7 @@ document.getElementById('custom-modal-close').onclick = () => {
   document.getElementById('custom-modal').style.display = 'none';
 };
 
-// --- MODALE VERSAMENTO ---
+
 function showVersamentoModal(goalId, goalNome, callback) {
   const modal = document.getElementById('versamento-modal');
   const title = document.getElementById('versamento-title');
@@ -47,7 +47,6 @@ function showVersamentoModal(goalId, goalNome, callback) {
   importoInput.value = '';
   descrizioneInput.value = 'Versamento manuale';
 
-  // Gestione chiusura modal
   const closeModal = () => {
     modal.style.display = 'none';
     form.onsubmit = null;
@@ -56,7 +55,6 @@ function showVersamentoModal(goalId, goalNome, callback) {
 
   cancelBtn.onclick = closeModal;
 
-  // Gestione submit form
   form.onsubmit = (e) => {
     e.preventDefault();
     const importo = parseFloat(importoInput.value);
@@ -76,7 +74,7 @@ function showVersamentoModal(goalId, goalNome, callback) {
   importoInput.focus();
 }
 
-// --- MODALE PROMPT CON INPUT ---
+
 function showPrompt(message, defaultValue, callback) {
   showModal(`
     <div style="margin-bottom:1rem;">${message}</div>
@@ -101,8 +99,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const goalForm = document.getElementById('goal-form');
   let editingGoalId = null;
 
-  // Le funzioni di autenticazione sono ora gestite da auth-utils.js
-
   function openModal(goal = null) {
     modal.style.display = 'flex';
     if (goal) {
@@ -117,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
       document.getElementById('modal-title').innerText = 'Nuovo Obiettivo';
       goalForm.reset();
-      document.getElementById('goal-colore').value = '#3498db'; // Default blu
+      document.getElementById('goal-colore').value = '#3498db'; 
       editingGoalId = null;
     }
   }
@@ -134,7 +130,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   addGoalBtn.onclick = () => openModal();
 
-  // Render goals
   function renderGoals(goals) {
     goalsList.innerHTML = '';
     if (!goals.length) {
@@ -145,7 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
     goals.forEach(goal => {
-      // Calcolo robusto della percentuale
       const attuale = parseFloat(goal.importo_attuale) || 0;
       const target = parseFloat(goal.importo_target) || 1;
       const percent = Math.min((attuale / target) * 100, 100);
@@ -224,15 +218,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Carica goals
   async function loadGoals() {
-    // Aggiungi un timestamp per evitare cache
+ 
     const timestamp = new Date().getTime();
     const { response, data } = await authFetch(`${API_URL}?_t=${timestamp}`);
     if (response.ok) {
-      // Se la risposta è paginata (DRF di default), i dati sono in data.results
+
       const goals = Array.isArray(data) ? data : (data.results || []);
-      console.log('Goals caricati:', goals); // Debug log
+      console.log('Goals caricati:', goals);
       renderGoals(goals);
     } else {
       console.error('Errore:', data);
@@ -240,19 +233,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Elimina goal
   async function deleteGoal(goalId) {
     showSpinner();
 
     try {
       const { response, data } = await authFetch(API_URL + goalId + '/', { method: 'DELETE' });
 
-      // Mantieni lo spinner per 2 secondi per dare feedback visivo
       setTimeout(() => {
         hideSpinner();
 
         if (response.ok) {
-          // Ricarica la lista degli obiettivi
           loadGoals();
         } else {
           console.error('Errore eliminazione:', data);
@@ -261,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 2000);
 
     } catch (error) {
-      // In caso di errore di rete, nascondi lo spinner immediatamente
       setTimeout(() => {
         hideSpinner();
         console.error('Errore di rete:', error);
@@ -270,7 +259,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Aggiungi denaro a un goal
   async function addMoneyToGoal(goalId, amount, descrizione = 'Versamento manuale') {
     showSpinner();
     const { response, data } = await authFetch(`${API_URL}${goalId}/add-money/`, {
@@ -280,25 +268,22 @@ document.addEventListener('DOMContentLoaded', function() {
     hideSpinner();
 
     if (response.ok) {
-      console.log('Versamento effettuato, dati ricevuti:', data); // Debug log
+      console.log('Versamento effettuato, dati ricevuti:', data); 
       showModal('Versamento effettuato con successo!', {
         actions: [{
           text: "OK",
           callback: () => {
-            // Forza il ricaricamento dopo la chiusura del modal
             setTimeout(() => loadGoals(), 100);
           }
         }]
       });
-      // Ricarica immediatamente
       loadGoals();
     } else {
-      console.error('Errore versamento:', data); // Debug log
+      console.error('Errore versamento:', data); 
       showModal('Errore nel versamento: ' + (data.detail || JSON.stringify(data)));
     }
   }
 
-  // Salva goal (create/update)
   goalForm.onsubmit = async function(e) {
     e.preventDefault();
     const nome = document.getElementById('goal-nome').value.trim();
@@ -370,9 +355,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (event.target == modal) closeModalFunc();
   }
 
-  // Controllo iniziale del token e caricamento goals tramite authUtils
   if (!window.authUtils.requireAuth()) {
-    return; // User will be redirected to login
+    return; 
   }
 
   async function checkTokenValidity() {

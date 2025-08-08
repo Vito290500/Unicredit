@@ -1,4 +1,4 @@
-/* FUNCTION FOR FETCH DATI PERSONALI AND POPULATE FIELDS */
+/* FUNZIONE PER IL FETCH E RENDERING DEI DATI PERSONALI */
 
 document.addEventListener('DOMContentLoaded', async () => {
     let original = {};

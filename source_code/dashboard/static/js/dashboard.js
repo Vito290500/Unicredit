@@ -1,7 +1,7 @@
-/* FUNCTION FOR HANDLING DROPDOWN MENU */
+/* FUNZIONE PER IL DROPDOWN MENU */
 document.addEventListener('DOMContentLoaded', () => {
   if (!window.authUtils.requireAuth()) {
-    return; // User will be redirected to login
+    return;
   }
 
   const toggle = document.getElementById('profileToggle');
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-/* FUNCTION FOR CREDIT CARD */
+/* FUNZIONE PER LA CARTA DEL CONTO */
 document.addEventListener('DOMContentLoaded', () => {
 
   const front = document.querySelector('.finhub-card:not(.back)');
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (!window.authUtils.requireAuth()) {
 
-    return; // User will be redirected to login
+    return;
   }
 
   window.authUtils.authFetch('/api/dashboard-data/')
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-/* CREDIT CARD MODAL FUNCTIONALITY */
+/* GESTIONE MODALE DELLA CARTA DEL CONTO */
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('creditCardModal');
   const modalClose = document.getElementById('modalClose');

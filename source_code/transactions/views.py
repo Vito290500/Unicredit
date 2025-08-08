@@ -1,17 +1,19 @@
 """
-Transaction views configuration. 
+Confiurazione views per le transazioni
 """
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema, extend_schema_view
-from .models import Transaction
-from .serializers import TransactionSerializer, TransactionDetailSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from .models import Transaction
+from .serializers import TransactionSerializer, TransactionDetailSerializer
 from .serializers import TransferSerializer
 from accounts.models import BankAccount
 from .pagination import TransactionPageNumberPagination
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -23,6 +25,8 @@ from .pagination import TransactionPageNumberPagination
         description="Restituisce i dettagli di una singola transazione per `id`."
     ),
 )
+
+
 class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Transaction.objects.all().order_by('-created_at')
     serializer_class = TransactionSerializer
@@ -53,22 +57,14 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
             if date_to_parsed:
                 qs = qs.filter(date__lte=date_to_parsed)
 
-        # Log delle transazioni filtrate
-        print(f"Filtered transactions count: {qs.count()}")
-
-        # Log delle transazioni per mese
         from collections import defaultdict
         transactions_per_month = defaultdict(int)
         for t in qs:
             month = t.date.month
             transactions_per_month[month] += 1
-        print("Transactions per month:")
-        for month, count in transactions_per_month.items():
-            print(f"Month: {month}, Count: {count}")
-
-        for t in qs[:10]:  # stampo solo le prime 10 per non sovraccaricare
-            print(f"Transaction: id={t.id}, date={t.date}, amount={t.amount}")
+       
         return qs
+
 
 class TransferView(APIView):
     permission_classes = [IsAuthenticated]

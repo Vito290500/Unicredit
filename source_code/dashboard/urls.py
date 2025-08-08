@@ -1,5 +1,5 @@
 """
-DASHBOARD urls configuration.
+Configurazione routing dashboard app
 """
 from django.urls import path
 from django.views.generic import TemplateView

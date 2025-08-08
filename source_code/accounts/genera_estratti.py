@@ -1,15 +1,20 @@
+"""
+File helper per la generazione dell'estratto conto
+"""
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from .models import EstrattoConto
 from datetime import date
 from django.db.models import Sum
 
+
 class Command(BaseCommand):
     help = 'Genera estratti conto mensili per tutti gli utenti'
 
     def handle(self, *args, **kwargs):
         oggi = date.today()
-        # Calcolo mese e anno del mese precedente in modo robusto
+        
         if oggi.month == 1:
             mese = 12
             anno = oggi.year - 1

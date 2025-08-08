@@ -415,21 +415,7 @@ body{
   margin-bottom: 0.7rem;
   margin-top: 0.2rem;
 }
-@media (max-width: 600px) {
-  .modal-content-pin {
-    min-width: 90vw !important;
-    max-width: 98vw !important;
-    padding: 1.2rem 0.5rem !important;
-  }
-  .success-title {
-    font-size: 1.1rem;
-  }
-  .pin-btn, .rubrica-btn {
-    min-width: 120px;
-    font-size: 1rem;
-    padding: 0.7rem 0.7rem;
-  }
-}
+
 .celle-dati input, .celle-dati select, .celle-dati textarea {
   box-sizing: border-box;
 }

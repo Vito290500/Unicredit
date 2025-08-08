@@ -1,3 +1,4 @@
+/* FUNZIONI PER LA GESTIONE DELLE MODALI */
 function showModal(message) {
     const modal = document.getElementById('custom-modal');
     const msg = document.getElementById('custom-modal-message');
@@ -47,9 +48,10 @@ function showConfirmModal(message, onConfirm) {
     };
 }
 
+/* FUNZIONE PRINCIPALE CHE GESTISCE TUTTI GLI EVENTI NELLA PAGINA SUDDIVISIONE SPESE */
 document.addEventListener('DOMContentLoaded', function() {
     if (!window.authUtils.requireAuth()) {
-        return; // User will be redirected to login
+        return; 
     }
 
     let saldoDisponibile = 0;
@@ -404,6 +406,5 @@ document.addEventListener('DOMContentLoaded', function() {
     window.rimuoviCategoria = rimuoviCategoria;
     window.editCategoria = editCategoria;
     
-    // Inizializza UI
     updateUI();
 });

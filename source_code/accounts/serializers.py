@@ -1,8 +1,13 @@
 """
-Serializers for accounts app
+Configurazione dei serializers per l'app account
 """
 from rest_framework import serializers
-from .models import Accounts, Profile, BankAccount, Card, Contact, Accredito, EstrattoConto, GoalsSaving, GoalsSavingMovimento
+from .models import (
+    Accounts, Profile, BankAccount,
+    Card, Contact, Accredito,
+    EstrattoConto, GoalsSaving,
+    GoalsSavingMovimento
+)
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,7 +36,6 @@ class AccountSerializer(serializers.ModelSerializer):
 
 
 class AccountWithProfileSerializer(AccountSerializer):
-    """Class that handling account with profile data."""
     profile = ProfileSerializer(read_only=False)
     email = serializers.EmailField(source="user.email", read_only=True)
 
@@ -114,7 +118,6 @@ class EstrattoContoSerializer(serializers.ModelSerializer):
     class Meta:
         model = EstrattoConto
         fields = ['id', 'mese', 'anno', 'saldo_iniziale', 'saldo_finale', 'data_creazione']
-
 
 
 class GoalsSavingSerializer(serializers.ModelSerializer):

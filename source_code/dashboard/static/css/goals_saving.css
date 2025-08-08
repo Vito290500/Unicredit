@@ -98,7 +98,6 @@ body{
   overflow: hidden;
 }
 .goal-progress {
-  /* Il colore di background viene impostato dinamicamente via JavaScript */
   height: 100%;
   border-radius: 6px;
   transition: width 0.4s, background-color 0.3s ease;
@@ -296,19 +295,16 @@ body{
   font-size: 14px;
   background-color: white;
 }
-
 #goal-colore option {
   padding: 5px;
 }
-
-/* Stili per i colori personalizzati dei goals */
 .goal-card.colored-goal h3 {
   transition: color 0.3s ease;
 }
-
 .goal-progress {
   transition: background-color 0.3s ease;
 }
+
 
 /* Modal per versamento con descrizione */
 .versamento-modal {
@@ -321,7 +317,6 @@ body{
   height: 100%;
   background-color: rgba(0,0,0,0.5);
 }
-
 .versamento-modal-content {
   background-color: #fefefe;
   margin: 15% auto;
@@ -426,5 +421,5 @@ body{
   color: #666;
   font-size: 1.2rem;
   text-align: center;
-  min-height: 300px; /* Ensure minimum height for proper centering */
+  min-height: 300px; 
 }

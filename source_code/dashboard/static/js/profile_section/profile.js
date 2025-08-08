@@ -1,4 +1,4 @@
-/* FUNCTION FOR PROFILE DATA FETCH AND REDIRECT */
+/* FUNZIONE PER IL FETCH DEI DATI DEL PROFILO */
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {

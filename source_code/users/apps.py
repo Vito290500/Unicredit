@@ -7,4 +7,4 @@ class UsersConfig(AppConfig):
     name = 'users'
 
     def ready(self):
-        import users.signals  # Importa il modulo dei segnali per registrarli
+        import users.signals

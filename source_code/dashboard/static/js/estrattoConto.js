@@ -4,9 +4,10 @@ let allEstratti = [];
 let estrattiCurrentPage = 1;
 let estrattiCurrentSearch = '';
 
+/* LOGICA PRINCIPALE */
 document.addEventListener('DOMContentLoaded', function() {
   if (!window.authUtils.requireAuth()) {
-    return; // User will be redirected to login
+    return; 
   }
 
   fetchEstratti();
@@ -18,17 +19,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+/* FETCH BILANCIO CORRENTE */
 async function fetchCurrentBalance() {
   const { response, data } = await window.authUtils.authFetch('/api/accounts/');
   if (response.ok && data && data.length > 0) {
-    // Prendo il balance del primo conto bancario
     return parseFloat(data[0].balance) || 0;
   }
   return 0;
 }
 
+/* FETCH ESTRATTI CONTO */
 async function fetchEstratti(page = 1) {
-  // Recupera il balance attuale
   const saldoAttuale = await fetchCurrentBalance();
 
   const { response, data } = await window.authUtils.authFetch(API_ESTRATTI_URL);
@@ -43,7 +44,6 @@ async function fetchEstratti(page = 1) {
       raw: e
     }));
 
-    // Ricalcolo i saldi iniziali e finali usando il balance attuale
     await ricalcolaSaldiEstratti(estratti, saldoAttuale);
 
     allEstratti = estratti.sort((a, b) => {
@@ -54,10 +54,10 @@ async function fetchEstratti(page = 1) {
   }
 }
 
+/*  CALCOLO SALDI DEGLI ESTRATTI CONTO */
 async function ricalcolaSaldiEstratti(estratti, saldoAttuale) {
   let saldoFinale = saldoAttuale;
 
-  // Ordina gli estratti conto dal più recente al più vecchio (anno, mese decrescente)
   estratti.sort((a, b) => {
     if (a.anno !== b.anno) return b.anno - a.anno;
     return b.mese - a.mese;
@@ -66,7 +66,6 @@ async function ricalcolaSaldiEstratti(estratti, saldoAttuale) {
   for (let i = 0; i < estratti.length; i++) {
     const estratto = estratti[i];
 
-    // Se non ci sono movimenti nel raw, li recupero
     if (!estratto.raw.transactions || estratto.raw.transactions.length === 0) {
       try {
         const movimenti = await fetchMovimentiMese(estratto.mese, estratto.anno);
@@ -77,7 +76,6 @@ async function ricalcolaSaldiEstratti(estratti, saldoAttuale) {
       }
     }
 
-    // Calcolo somme positive e negative
     let sommaPositiva = 0;
     let sommaNegativa = 0;
     estratto.raw.transactions.forEach(t => {
@@ -86,23 +84,18 @@ async function ricalcolaSaldiEstratti(estratti, saldoAttuale) {
       else sommaNegativa += amount;
     });
 
-    // saldo finale del mese corrente
     estratto.saldo_finale = saldoFinale;
-
-    // saldo iniziale = saldo finale + somme negative - somme positive
-    estratto.saldo_iniziale = saldoFinale + sommaNegativa - sommaPositiva;
-
-    // saldo finale per il mese precedente è il saldo iniziale di questo mese
+    estratto.saldo_iniziale = saldoFinale - sommaPositiva - sommaNegativa;
     saldoFinale = estratto.saldo_iniziale;
   }
 
-  // Riordina per visualizzazione dal più vecchio al più recente
   estratti.sort((a, b) => {
     if (a.anno !== b.anno) return a.anno - b.anno;
     return a.mese - b.mese;
   });
 }
 
+/* FESTIONE FILTRI ESTRATTI */
 function filterEstratti(estratti, search) {
   if (!search) return estratti;
   return estratti.filter(e =>
@@ -114,6 +107,7 @@ function filterEstratti(estratti, search) {
   );
 }
 
+/* RENDER ESTRATTI CONTO */
 function renderEstrattiTable(estratti, page) {
   const tbody = document.getElementById('estratti-tbody');
   tbody.innerHTML = '';
@@ -153,16 +147,15 @@ function renderEstrattiTable(estratti, page) {
   });
 }
 
-
+/* FETCH MOVIMENTI MESE */
 async function fetchMovimentiMese(mese, anno) {
   console.log(`Fetching movimenti for month: ${mese}, year: ${anno}`);
 
   const startDate = `${anno}-${String(mese).padStart(2, '0')}-01`;
-  // Correggo il calcolo dell'ultimo giorno del mese aggiungendo 1 a mese per new Date
-  const lastDay = new Date(anno, mese, 0).getDate(); // mese + 1 per new Date
+
+  const lastDay = new Date(anno, mese, 0).getDate(); 
   const endDate = `${anno}-${String(mese).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-  // Correggo la query string rimuovendo &amp; e mettendo &
   const { response, data } = await window.authUtils.authFetch(`/api/transactions/?date_from=${startDate}&date_to=${endDate}`);
 
   if (!response.ok) {
@@ -192,6 +185,7 @@ async function fetchMovimentiMese(mese, anno) {
   }));
 }
 
+/* GESTIONE PAGINAZIONE DELLA TABELLA ESTRATTI */
 function renderEstrattiPagination(total, page) {
   const pagDiv = document.getElementById('estratti-pagination');
   pagDiv.innerHTML = '';
@@ -232,12 +226,14 @@ function renderEstrattiPagination(total, page) {
   pagDiv.appendChild(nextBtn);
 }
 
+/* FORMATTAZIONE DATA */
 function formatDateTime(dt) {
   if (!dt) return '-';
   const d = new Date(dt);
   return d.toLocaleDateString('it-IT') + ' ' + d.toLocaleTimeString('it-IT', {hour: '2-digit', minute:'2-digit'});
 }
 
+/* FUNZIONI PER LA GENERAZIONE DEL PDF DELL'ESTRATTO */
 function generateEstrattoPDFCompleto(estratto, movimenti) {
   console.log('Generating PDF for estratto:', estratto);
   console.log('Movimenti passed to PDF:', movimenti);

@@ -1,4 +1,4 @@
-/* FETCH ELENCO MOVIMENTI */
+/* GESTIONE ELENCO MOVIMENTI */
 
 const API_TRANSAZIONI_URL = '/api/transactions/';
 const API_ACCREDITI_URL = '/api/accrediti/';
@@ -16,7 +16,7 @@ function updateFilterBtn() {
 
 document.addEventListener('DOMContentLoaded', function() {
   if (!window.authUtils.requireAuth()) {
-    return; // User will be redirected to login
+    return; 
   }
 
   async function fetchMovimenti(page = 1) {
@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+/* FILTRI MOVIMENTI */
 function filterMovimenti(movimenti, search, categories) {
   let filtered = movimenti;
   if (categories && categories.length > 0) {
@@ -92,6 +93,7 @@ function filterMovimenti(movimenti, search, categories) {
   );
 }
 
+/* FUNZIONE RENDERING DEI MOVIMENTI */
 function renderMovimentiTable(movimenti, page) {
   const tbody = document.getElementById('movimenti-tbody');
   tbody.innerHTML = '';
@@ -132,6 +134,7 @@ function renderMovimentiTable(movimenti, page) {
   });
 }
 
+/* FUNZIONE PER LA GESTIONE DELLA PAGINAZIONE DEI MOVIMENTI */
 function renderMovimentiPagination(total, page) {
   const pagDiv = document.getElementById('movimenti-pagination');
   pagDiv.innerHTML = '';
@@ -210,9 +213,9 @@ function extractCategories(movimenti) {
   menu.querySelectorAll('.movimenti-filter-checkbox').forEach(cb => {
     cb.addEventListener('change', function() {
       selectedCategories = Array.from(menu.querySelectorAll('.movimenti-filter-checkbox:checked')).map(cb => cb.value);
-      renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch, selectedCategories), 1);
       updateFilterBtn();
+      renderMovimentiTable(filterMovimenti(allMovimenti, currentSearch, selectedCategories), currentPage);
+      renderMovimentiPagination(filterMovimenti(allMovimenti, currentSearch, selectedCategories).length, currentPage);
     });
   });
-
-  update} 
+} 

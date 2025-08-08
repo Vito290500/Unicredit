@@ -1,5 +1,5 @@
 """
-Admin customization for user models
+Configurazione admin per l'users
 """
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -7,7 +7,7 @@ from .models import User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    """Class customization that handling layout customization for users admin section."""
+    """Classe per la visualizzazione dell'user nella sezione admin"""
 
     model = User
     list_display   = ("email", "full_name", "is_staff", "is_superuser", "is_active", "last_login")

@@ -1,6 +1,7 @@
+/* LOGICA PRINCIPALE PER LA SEZIONE STATISTICA */
 document.addEventListener('DOMContentLoaded', function() {
   if (!window.authUtils.requireAuth()) {
-    return; // User will be redirected to login
+    return;
   }
 
   window.authUtils.authFetch('/api/dashboard-stats/')
@@ -39,7 +40,6 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
 
-        // Aggiorna contatori da dashboard-stats se presenti nel data
         const bonificiInviatiElem = document.getElementById('bonifici-inviati');
         const bonificiRicevutiElem = document.getElementById('bonifici-ricevuti');
         const transazioniElem = document.getElementById('transazioni');
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
       console.error('Errore nel fetch dati dashboard:', err);
     });
 
-  // Correzione errore addEventListener su elemento null
+
   const eyeBtn = document.getElementById('toggle-eye');
   if (eyeBtn) {
     eyeBtn.addEventListener('click', () => {
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
-// Correzione fetch grafico entrate/uscite
+/* FETCH PER LE ENTRATE E USCITE */
 async function fetchEntrateUscite() {
   try {
     const [
@@ -86,21 +86,18 @@ async function fetchEntrateUscite() {
     ]);
 
     if (resTx.ok && resAcc.ok) {
-      // Processa transazioni (uscite)
       const txs = (transazioni.results || []).map(tx => ({
         date: tx.date,
-        amount: Math.abs(tx.amount), // uscite sempre positive per il grafico
+        amount: Math.abs(tx.amount), 
         type: 'uscita'
       }));
 
-      // Processa accrediti (entrate)
       const accs = (accrediti.results || []).map(acc => ({
         date: acc.date,
-        amount: Math.abs(acc.amount), // entrate sempre positive
+        amount: Math.abs(acc.amount), 
         type: 'entrata'
       }));
 
-      // Combina e raggruppa per giorno/mese
       const allMovimenti = txs.concat(accs);
       const chartData = processDataForChart(allMovimenti);
 
@@ -174,7 +171,7 @@ async function fetchEntrateUscite() {
   }
 }
 
-// Correzione fetch grafico categorie
+/* FETCH CETEGORIE PER IL GRAFICO */
 async function fetchCategorie() {
   try {
     const [
@@ -186,17 +183,14 @@ async function fetchCategorie() {
     ]);
 
     if (resTx.ok && resAcc.ok) {
-      // Raggruppa per categoria
       const categorieData = {};
 
-      // Processa transazioni
       (transazioni.results || []).forEach(tx => {
         const cat = tx.category_name || 'Altro';
         if (!categorieData[cat]) categorieData[cat] = 0;
         categorieData[cat] += Math.abs(tx.amount);
       });
 
-      // Processa accrediti
       (accrediti.results || []).forEach(acc => {
         const cat = acc.description || 'Entrate';
         if (!categorieData[cat]) categorieData[cat] = 0;
@@ -241,11 +235,10 @@ async function fetchCategorie() {
   }
 }
 
-// Chiamate iniziali
 fetchEntrateUscite();
 fetchCategorie();
 
-// Funzione per processare i dati per il grafico temporale
+/* FUNZIONE PER PROCESSARE I DATI PER IL GRAFICO TEMPORALE */
 function processDataForChart(movimenti) {
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -253,7 +246,6 @@ function processDataForChart(movimenti) {
     const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
-    // Raggruppa per giorno
     const currentMonthData = {};
     const previousMonthData = {};
 
@@ -284,7 +276,6 @@ function processDataForChart(movimenti) {
         }
     });
 
-    // Converti in array ordinato
     const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const daysInPreviousMonth = new Date(previousYear, previousMonth + 1, 0).getDate();
 

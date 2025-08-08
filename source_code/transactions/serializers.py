@@ -1,5 +1,5 @@
 """
-Transaction Serializers configuration.
+Configurazione serializers per le transazioni
 """
 from rest_framework import serializers
 from .models import Transaction, Category
@@ -11,6 +11,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from accounts.serializers import BankAccountSerializer
 from accounts.models import Accounts
+
 
 class TransactionSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()
@@ -62,6 +63,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def get_destinatario_nome(self, obj):
         return obj.destinatario_nome or ''
+
 
 class TransferSerializer(serializers.Serializer):
 
@@ -191,6 +193,7 @@ class TransferSerializer(serializers.Serializer):
             from_account.save()
             to_account.save()
         return {'tx_out': tx_out, 'tx_in': tx_in}
+
 
 class TransactionDetailSerializer(serializers.ModelSerializer):
     category_name = serializers.SerializerMethodField()

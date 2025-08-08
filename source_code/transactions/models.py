@@ -1,21 +1,25 @@
 """
-Transaction model configuration.
+Configurazione models per le transazioni
 """
+
 import uuid
 from django.db import models
 from accounts.models import BankAccount
 
 class Category(models.Model):
-    """Class that handling category model."""
+    """Tabella per le categorie."""
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
 
 class Transaction(models.Model):
-    """Class that handling transaction model."""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    
+    """Tabella per le transazioni"""
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
     account = models.ForeignKey(
         BankAccount,
         on_delete=models.CASCADE,

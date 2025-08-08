@@ -1,11 +1,8 @@
-
 const API_URL = '/api/transactions/';
 const PAGE_SIZE = 10;
 let allTransazioni = [];
-let allCategoriesList = [];
 let currentPage = 1;
 let currentSearch = '';
-let currentCategory = '';
 let selectedCategories = [];
 
 window.updateFilterBtn = function() {
@@ -16,13 +13,17 @@ window.updateFilterBtn = function() {
 
 document.addEventListener('DOMContentLoaded', () => {
   if (!window.authUtils.requireAuth()) {
-    return; // User will be redirected to login
+    return;
   }
 
   fetchTransazioni();
+
   document.getElementById('transazioni-search').addEventListener('input', function(e) {
+    currentSearch = e.target.value.toLowerCase();
+    currentPage = 1;
     filterAndRender();
   });
+
   const filterBtn = document.getElementById('transazioni-filter-btn');
   const filterMenu = document.getElementById('transazioni-filter-menu');
   filterBtn.addEventListener('click', function(e) {
@@ -30,115 +31,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filterMenu.innerHTML.trim() === '') return;
     filterMenu.classList.toggle('show');
   });
+
   document.addEventListener('click', function(e) {
     if (!filterMenu.contains(e.target) && e.target !== filterBtn) {
       filterMenu.classList.remove('show');
     }
   });
-
-  const profileToggle = document.getElementById('profileToggle');
-  const profileMenu = document.getElementById('profileMenu');
-  if (profileToggle && profileMenu) {
-    profileToggle.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const isOpen = !profileMenu.classList.contains('hidden');
-      profileMenu.classList.toggle('hidden', isOpen);
-      profileToggle.setAttribute('aria-expanded', String(!isOpen));
-    });
-    document.addEventListener('click', function() {
-      if (!profileMenu.classList.contains('hidden')) {
-        profileMenu.classList.add('hidden');
-        profileToggle.setAttribute('aria-expanded', 'false');
-      }
-    });
-  }
 });
 
-async function fetchTransazioni(page = 1, search = '', categories = []) {
-  let url = `${API_URL}?page=${page}`;
-  if (search) url += `&search=${encodeURIComponent(search)}`;
-  if (categories && categories.length > 0) {
-    url += `&category=${categories.map(encodeURIComponent).join(',')}`;
-  }
-
-  const { response, data } = await window.authUtils.authFetch(url);
+async function fetchTransazioni() {
+  const { response, data } = await window.authUtils.authFetch(API_URL);
   if (response.ok && data) {
     allTransazioni = data.results || [];
-    renderTransazioniTable(allTransazioni, data.count || 0, page);
-    renderPagination(data.count || 0, page);
-    if (data.results) extractCategories(data.results);
+    extractCategories(allTransazioni);
+    filterAndRender();
   }
-}
-
-function renderTransazioniTable(transazioni, totalCount, page) {
-  const tbody = document.getElementById('transazioni-tbody');
-  tbody.innerHTML = '';
-  let startNum = totalCount - (page - 1) * PAGE_SIZE;
-  transazioni.forEach((tx, idx) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td title="${tx.id}">${startNum - idx}</td>
-      <td>${tx.transaction_name}</td>
-      <td>${tx.date || '-'}</td>
-      <td>${tx.amount} ${tx.currency || ''}</td>
-      <td>${tx.destinatario_nome || ''}</td>
-      <td>${tx.category_name || '-'}</td>
-      <td><button class="scarica-btn" data-id="${tx.id}">Scarica</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  document.querySelectorAll('.scarica-btn').forEach((btn) => {
-    btn.addEventListener('click', async function() {
-      const id = btn.getAttribute('data-id');
-      const { response, data } = await window.authUtils.authFetch(`/api/transactions/${id}/`);
-      if (response.ok && data) {
-        generateAndPreviewPDF(data);
-      }
-    });
-  });
-}
-
-function renderPagination(total, page) {
-  const pagDiv = document.getElementById('transazioni-pagination');
-  pagDiv.innerHTML = '';
-  const totalPages = Math.ceil(total / PAGE_SIZE);
-  if (totalPages <= 1) return;
-
-  const prevBtn = document.createElement('button');
-  prevBtn.textContent = '<';
-  prevBtn.disabled = page === 1;
-  prevBtn.addEventListener('click', () => {
-    if (page > 1) {
-      currentPage = page - 1;
-      fetchTransazioni(currentPage, currentSearch, currentCategory);
-    }
-  });
-  pagDiv.appendChild(prevBtn);
-
-
-  for (let i = 1; i <= totalPages; i++) {
-    const btn = document.createElement('button');
-    btn.textContent = i;
-    if (i === page) btn.classList.add('active');
-    btn.addEventListener('click', () => {
-      currentPage = i;
-      fetchTransazioni(currentPage, currentSearch, currentCategory);
-    });
-    pagDiv.appendChild(btn);
-  }
-
-
-  const nextBtn = document.createElement('button');
-  nextBtn.textContent = '>';
-  nextBtn.disabled = page === totalPages;
-  nextBtn.addEventListener('click', () => {
-    if (page < totalPages) {
-      currentPage = page + 1;
-      fetchTransazioni(currentPage, currentSearch, currentCategory);
-    }
-  });
-  pagDiv.appendChild(nextBtn);
 }
 
 function extractCategories(transazioni) {
@@ -146,7 +53,7 @@ function extractCategories(transazioni) {
   const cats = Array.from(new Set(transazioni.map(tx => tx.category_name).filter(Boolean)));
   menu.innerHTML = cats.map(c => `
     <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;cursor:pointer;">
-      <input type="checkbox" class="transazioni-filter-checkbox" value="${c}">
+      <input type="checkbox" class="transazioni-filter-checkbox" value="${c.toLowerCase()}">
       <span>${c}</span>
     </label>
   `).join('');
@@ -154,6 +61,7 @@ function extractCategories(transazioni) {
   menu.querySelectorAll('.transazioni-filter-checkbox').forEach(cb => {
     cb.addEventListener('change', function() {
       selectedCategories = Array.from(menu.querySelectorAll('.transazioni-filter-checkbox:checked')).map(cb => cb.value);
+      currentPage = 1;
       filterAndRender();
       window.updateFilterBtn();
     });
@@ -165,75 +73,96 @@ function extractCategories(transazioni) {
 function filterAndRender() {
   let filtered = allTransazioni;
   if (selectedCategories.length > 0) {
-    filtered = filtered.filter(tx => selectedCategories.includes(tx.category_name));
+    filtered = filtered.filter(tx => selectedCategories.includes((tx.category_name || '').toLowerCase()));
   }
-  const searchVal = document.getElementById('transazioni-search').value.toLowerCase();
-  if (searchVal) {
+  if (currentSearch) {
     filtered = filtered.filter(tx =>
-      (tx.transaction_name && tx.transaction_name.toLowerCase().includes(searchVal)) ||
-      (tx.destinatario_nome && tx.destinatario_nome.toLowerCase().includes(searchVal)) ||
-      (tx.category_name && tx.category_name.toLowerCase().includes(searchVal)) ||
-      (tx.amount && String(tx.amount).toLowerCase().includes(searchVal)) ||
-      (tx.date && tx.date.toLowerCase().includes(searchVal))
+      (tx.transaction_name && tx.transaction_name.toLowerCase().includes(currentSearch)) ||
+      (tx.destinatario_nome && tx.destinatario_nome.toLowerCase().includes(currentSearch)) ||
+      (tx.category_name && tx.category_name.toLowerCase().includes(currentSearch)) ||
+      (tx.amount && String(tx.amount).toLowerCase().includes(currentSearch)) ||
+      (tx.date && tx.date.toLowerCase().includes(currentSearch))
     );
   }
-  renderTransazioniTable(filtered, filtered.length, 1);
+  renderTransazioniTable(filtered, currentPage);
+  renderPagination(filtered.length, currentPage);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  fetchTransazioni();
-  document.getElementById('transazioni-search').addEventListener('input', function(e) {
-    filterAndRender();
-  });
-  const filterBtn = document.getElementById('transazioni-filter-btn');
-  const filterMenu = document.getElementById('transazioni-filter-menu');
-  filterBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    if (filterMenu.innerHTML.trim() === '') return;
-    filterMenu.classList.toggle('show');
-  });
-  document.addEventListener('click', function(e) {
-    if (!filterMenu.contains(e.target) && e.target !== filterBtn) {
-      filterMenu.classList.remove('show');
-    }
-  });
-
-  const profileToggle = document.getElementById('profileToggle');
-  const profileMenu = document.getElementById('profileMenu');
-  if (profileToggle && profileMenu) {
-    profileToggle.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const isOpen = !profileMenu.classList.contains('hidden');
-      profileMenu.classList.toggle('hidden', isOpen);
-      profileToggle.setAttribute('aria-expanded', String(!isOpen));
-    });
-    document.addEventListener('click', function() {
-      if (!profileMenu.classList.contains('hidden')) {
-        profileMenu.classList.add('hidden');
-        profileToggle.setAttribute('aria-expanded', 'false');
+function renderTransazioniTable(transazioni, page) {
+  const tbody = document.getElementById('transazioni-tbody');
+  tbody.innerHTML = '';
+  const startIdx = (page - 1) * PAGE_SIZE;
+  const endIdx = Math.min(startIdx + PAGE_SIZE, transazioni.length);
+  for (let i = startIdx; i < endIdx; i++) {
+    const tx = transazioni[i];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td title="${tx.id}">${i + 1}</td>
+      <td>${tx.transaction_name}</td>
+      <td>${tx.date || '-'}</td>
+      <td>${tx.amount} ${tx.currency || ''}</td>
+      <td>${tx.destinatario_nome || ''}</td>
+      <td>${tx.category_name || '-'}</td>
+      <td><button class="scarica-btn" data-id="${tx.id}">Scarica</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+  document.querySelectorAll('.scarica-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+      const id = btn.getAttribute('data-id');
+      const { response, data } = await window.authUtils.authFetch(`/api/transactions/${id}/`);
+      if (response.ok && data) {
+        generateAndPreviewPDF(data);
       }
     });
-  }
-});
-
-function getBase64FromImageUrl(url, callback) {
-  var img = new window.Image();
-  img.crossOrigin = 'Anonymous';
-  img.onload = function() {
-    var canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    var ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    var dataURL = canvas.toDataURL('image/png');
-    callback(dataURL);
-  };
-  img.src = url;
+  });
 }
 
+function renderPagination(totalItems, page) {
+  const pagDiv = document.getElementById('transazioni-pagination');
+  pagDiv.innerHTML = '';
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+  if (totalPages <= 1) return;
+
+  const prevBtn = document.createElement('button');
+  prevBtn.textContent = 'Prev';
+  prevBtn.disabled = page === 1;
+  prevBtn.addEventListener('click', () => {
+    if (page > 1) {
+      currentPage = page - 1;
+      filterAndRender();
+    }
+  });
+  pagDiv.appendChild(prevBtn);
+
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.classList.toggle('active', i === page);
+    btn.addEventListener('click', () => {
+      currentPage = i;
+      filterAndRender();
+    });
+    pagDiv.appendChild(btn);
+  }
+
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = 'Next';
+  nextBtn.disabled = page === totalPages;
+  nextBtn.addEventListener('click', () => {
+    if (page < totalPages) {
+      currentPage = page + 1;
+      filterAndRender();
+    }
+  });
+  pagDiv.appendChild(nextBtn);
+}
+
+/* FUNZIONE PER LA GENERAZIONE DEL PDF */
 function generateAndPreviewPDF(data) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
+
   getBase64FromImageUrl('/static/image/logo.png', function(logoBase64) {
     const pageWidth = doc.internal.pageSize.getWidth();
     doc.addImage(logoBase64, 'PNG', pageWidth/2-20, 10, 40, 20);
@@ -274,4 +203,19 @@ function generateAndPreviewPDF(data) {
     doc.text('Questa ricevuta è stata generata automaticamente dal sistema FinHub.', 20, y+=10);
     window.open(doc.output('bloburl'), '_blank');
   });
+}
+
+function getBase64FromImageUrl(url, callback) {
+  var img = new Image();
+  img.crossOrigin = 'Anonymous';
+  img.onload = function() {
+    var canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    var dataURL = canvas.toDataURL('image/png');
+    callback(dataURL);
+  };
+  img.src = url;
 } 

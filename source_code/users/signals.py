@@ -1,3 +1,7 @@
+"""
+Configurazione signals per users app
+"""
+
 from django.contrib.auth.signals import user_logged_in
 from django.utils.timezone import now
 from django.dispatch import receiver

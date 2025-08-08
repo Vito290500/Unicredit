@@ -1,6 +1,6 @@
+# Git Actions for pull request and push 
 name: Django CI
 
-# Git Actions for pull request and push 
 on:
   push:
     branches:

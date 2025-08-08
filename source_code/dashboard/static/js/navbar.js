@@ -1,3 +1,4 @@
+/* GESTIONE MODALE NAVBAR */
 const openModalBtn = document.getElementById('profileToggle');
 const modale = document.getElementById('profileMenu');
 const bodyArea = document.querySelector('body');

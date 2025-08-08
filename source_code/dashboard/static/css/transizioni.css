@@ -230,21 +230,6 @@ body{
   background: var(--blue-500);
   color: #fff;
 }
-@media (max-width: 900px) {
-  .transazioni-header-flex {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.7rem;
-  }
-  .transazioni-controls {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .transazioni-search-input, .transazioni-filter-select {
-    min-width: 0;
-    width: 100%;
-  }
-}
 .transazioni-table th:nth-child(1), .transazioni-table td:nth-child(1) {
   flex: 0 0 60px;
   min-width: 40px;

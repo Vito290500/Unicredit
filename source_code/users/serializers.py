@@ -1,5 +1,5 @@
 """
-USERS serializers configuration.
+Configurazione serializers per users app
 """
 
 from djoser.serializers import TokenCreateSerializer

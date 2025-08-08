@@ -1,4 +1,4 @@
-/* FUNCTION FOR PROFILE DATA FETCH AND REDIRECT AND MODIFY DATA */
+/* FUNZIONE PER GESTIRE I DATI DELL'ACCOUNT */
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {

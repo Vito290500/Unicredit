@@ -1,5 +1,5 @@
 """
-EMAIL BACKENDS CONFIGURATION.
+Configurazione email helper class per il backend
 """
 from django.core.mail.backends.smtp import EmailBackend
 from django.conf import settings

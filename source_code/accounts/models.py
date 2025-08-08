@@ -1,5 +1,5 @@
 """
-ACCOUNTS models customization
+Configurazione models per l'app accounts
 """
 import uuid
 from django.db import models
@@ -9,10 +9,18 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone; timezone.now()
 
+
 class Accounts(models.Model):
-    """Accounts model"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    """Tabella per accounts"""
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE
+    )
     iban = models.CharField(max_length=34, unique=True)
     name = models.CharField(max_length=120)
     currency = models.CharField(max_length=3)
@@ -23,9 +31,17 @@ class Accounts(models.Model):
 
         
 class Profile(models.Model):
-    """Profile Model"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    account = models.OneToOneField(Accounts, on_delete=models.CASCADE, related_name='profile')
+    """Tabella per profili"""
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    account = models.OneToOneField(
+        Accounts,
+        on_delete=models.CASCADE,
+        related_name='profile'
+    )
     full_name = models.CharField(max_length=120,blank=True)
     phone_number = models.CharField(max_length=15, blank=True)
     birth_date = models.DateField(blank=True, null=True)
@@ -39,30 +55,47 @@ class Profile(models.Model):
 
 
 class BankAccount(models.Model):
-    """Bank Accounts model"""
-    id          = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user        = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    iban        = models.CharField(max_length=34, unique=True)
-    name        = models.CharField(max_length=120)             
-    balance     = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    currency    = models.CharField(max_length=3, default='EUR')
-    opened_at   = models.DateField(auto_now_add=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
-    pin         = models.CharField(max_length=6, blank=True)  # PIN non hashato
+    """Tabella del conto bancario dell'account"""
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE
+    )
+    iban = models.CharField(max_length=34, unique=True)
+    name = models.CharField(max_length=120)             
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    currency = models.CharField(max_length=3, default='EUR')
+    opened_at = models.DateField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    pin = models.CharField(max_length=6, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.iban})"
 
 
 class Card(models.Model):
-    """Cards model"""
+    """Tabella della carta del conto bancario"""
+
     class Circuit(models.TextChoices):
+        """Circuito appartenenza carta"""
         VISA   = "VISA",  "Visa"
         MAST   = "MC",    "Mastercard"
         AMEX   = "AMEX",  "American Express"
 
-    id            = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    account       = models.ForeignKey('accounts.BankAccount', on_delete=models.CASCADE, related_name='cards')
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    account = models.ForeignKey(
+        'accounts.BankAccount',
+        on_delete=models.CASCADE,
+        related_name='cards'
+    )
     circuit       = models.CharField(max_length=5, choices=Circuit.choices)
     pan_last4     = models.CharField(max_length=4)                
     pan_hash      = models.CharField(max_length=128)              
@@ -83,8 +116,12 @@ class Card(models.Model):
 
 
 class Contact(models.Model):
-    """Contacts model"""
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='contacts')
+    """Tabella dei contatti nella rubrica"""
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='contacts'
+    )
     name = models.CharField(max_length=120)
     email = models.EmailField(blank=True)
     iban = models.CharField(max_length=34)
@@ -100,8 +137,12 @@ class Contact(models.Model):
 
 
 class Accredito(models.Model):
-    """Model for accrediti a favore (incoming credits like salary, refunds, etc.)"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    """Tabella per l'elenco degli accrediti"""
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
     account = models.ForeignKey(
         BankAccount,
         on_delete=models.CASCADE,
@@ -124,6 +165,7 @@ class Accredito(models.Model):
 
 @receiver(post_save, sender=BankAccount)
 def sync_account_iban(sender, instance, **kwargs):
+    """Helper function per sincronizzare l'iban"""
     try:
         account = Accounts.objects.get(user=instance.user)
         if account.iban != instance.iban:
@@ -134,7 +176,12 @@ def sync_account_iban(sender, instance, **kwargs):
 
 
 class EstrattoConto(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='estratti_conto')
+    """Tabella per l'elenco degli estratti conto"""
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='estratti_conto'
+    )
     mese = models.PositiveSmallIntegerField() 
     anno = models.PositiveSmallIntegerField()
     saldo_iniziale = models.DecimalField(max_digits=12, decimal_places=2)
@@ -150,11 +197,11 @@ class EstrattoConto(models.Model):
         return f" {self.mese:02d}/{self.anno}"
     
 
-
 class GoalsSaving(models.Model):
-    """Goals Saving model for financial objectives"""
+    """Tabella per i goals saving"""
 
     class Periodicita(models.TextChoices):
+        """Classe per la scelta della periodicità"""
         SETTIMANALE = "WEEKLY", "Settimanale"
         MENSILE = "MONTHLY", "Mensile"
         TRIMESTRALE = "QUARTERLY", "Trimestrale"
@@ -162,6 +209,7 @@ class GoalsSaving(models.Model):
         ANNUALE = "YEARLY", "Annuale"
 
     class Colore(models.TextChoices):
+        """Classe per la scelta del colore"""
         BLU = "#3498db", "Blu"
         VERDE = "#2ecc71", "Verde"
         ROSSO = "#e74c3c", "Rosso"
@@ -171,7 +219,11 @@ class GoalsSaving(models.Model):
         ROSA = "#e91e63", "Rosa"
         INDACO = "#3f51b5", "Indaco"
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
     bank_account = models.ForeignKey(
         BankAccount,
         on_delete=models.CASCADE,
@@ -251,15 +303,12 @@ class GoalsSaving(models.Model):
         if importo <= 0:
             raise ValueError("L'importo deve essere positivo")
 
-        # Crea il movimento
         movimento = GoalsSavingMovimento.objects.create(
             goal=self,
             tipo=GoalsSavingMovimento.TipoMovimento.VERSAMENTO,
             importo=importo,
             descrizione=descrizione
         )
-
-        # Aggiorna l'importo attuale
         self.importo_attuale += importo
         self.save(update_fields=['importo_attuale', 'updated_at'])
 
@@ -267,14 +316,17 @@ class GoalsSaving(models.Model):
 
 
 class GoalsSavingMovimento(models.Model):
-    
-    """Movimenti per i Goals Saving"""
+    """Tabella per i movimenti dei goal saving"""
     
     class TipoMovimento(models.TextChoices):
         VERSAMENTO = "DEPOSIT", "Versamento"
         PRELIEVO = "WITHDRAWAL", "Prelievo"
     
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
     goal = models.ForeignKey(
         GoalsSaving, 
         on_delete=models.CASCADE, 

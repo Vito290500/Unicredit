@@ -1,14 +1,43 @@
 """
-API views configuration.
+Configurazione views per le api
 """
-
+import logging
+from django.forms import ValidationError
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from django.utils.timezone import now
+from rest_framework import serializers
+from rest_framework import generics, permissions
+from rest_framework.generics import ListAPIView
 
-import logging
+from django.utils.timezone import now
+from django.shortcuts import render
+from django.utils import timezone
+from django.db.models import (
+    Sum, Q,
+    Min, Max
+)
+from django.db import transaction
+
+from accounts.models import BankAccount, Card
+from accounts.serializers import (
+    BankAccountSerializer, CardSerializer,
+    EstrattoContoSerializer, GoalsSavingSerializer,
+    GoalsSavingMovimentoSerializer
+)
+from accounts.models import (
+    Accounts, EstrattoConto,
+    GoalsSaving, GoalsSavingMovimento
+)
+from transactions.models import Category,Transaction
+from datetime import timedelta, date, datetime
+from decimal import Decimal
+from calendar import monthrange
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -20,29 +49,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         self.user.save(update_fields=['last_login'])
         return data
 
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
-
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from accounts.models import BankAccount, Card
-from accounts.serializers import BankAccountSerializer, CardSerializer,EstrattoContoSerializer, GoalsSavingSerializer, GoalsSavingMovimentoSerializer
-from accounts.models import Accounts, EstrattoConto, GoalsSaving, GoalsSavingMovimento
-from rest_framework.generics import ListAPIView
-from transactions.models import Category,Transaction
-from rest_framework import serializers
-from rest_framework.pagination import PageNumberPagination
-from datetime import timedelta, date
-from django.utils import timezone
-from django.db.models import Sum
-from rest_framework import generics, permissions
-from decimal import Decimal
-from django.db import transaction
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 class DashboardDataAPIView(APIView):
@@ -94,6 +103,7 @@ class DashboardDataAPIView(APIView):
             'card': card_data,
         })
 
+
 class UserBankAccountListView(ListAPIView):
     serializer_class = BankAccountSerializer
     permission_classes = [IsAuthenticated]
@@ -111,10 +121,12 @@ class UserBankAccountListView(ListAPIView):
     def get_queryset(self):
         return BankAccount.objects.filter(user=self.request.user)
 
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name']
+
 
 class CategoryListView(ListAPIView):
     serializer_class = CategorySerializer
@@ -125,8 +137,8 @@ class CategoryListView(ListAPIView):
         return Category.objects.all()
 
     def get_ordering(self):
-        # Disable ordering to avoid FieldError
         return []
+
 
 class DashboardStatsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -145,6 +157,7 @@ class DashboardStatsView(APIView):
             "categorie": categorie,
         })
     
+
 class EntrateUsciteChartView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -155,7 +168,6 @@ class EntrateUsciteChartView(APIView):
         first_day_last_month = (first_day_this_month - timedelta(days=1)).replace(day=1)
         last_day_last_month = first_day_this_month - timedelta(days=1)
 
-        # Mese attuale
         transactions = Transaction.objects.filter(account__user=user)
         entrate_uscite = []
         for d in range(1, today.day+1):
@@ -168,7 +180,6 @@ class EntrateUsciteChartView(APIView):
                 "uscite": abs(float(uscite)),
             })
 
-        # Mese precedente
         days_last_month = (last_day_last_month - first_day_last_month).days + 1
         entrate_uscite_prev = []
         for d in range(1, days_last_month+1):
@@ -186,6 +197,7 @@ class EntrateUsciteChartView(APIView):
             "previous_month": entrate_uscite_prev,
         })
     
+
 class CategoriaChartView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -201,13 +213,6 @@ class CategoriaChartView(APIView):
         data = [d for d in data if d['category__name']]
         return Response(data)
     
-from datetime import date, datetime
-from calendar import monthrange
-from collections import defaultdict
-from django.db.models import Min, Max
-
-from django.db.models import Sum, Q
-from datetime import timedelta
 
 class EstrattoContoListAPIView(generics.ListAPIView):
     serializer_class = EstrattoContoSerializer
@@ -292,6 +297,7 @@ class EstrattoContoListAPIView(generics.ListAPIView):
 
         return Response(estratti)
     
+
 class MovimentiMensiliAPIView(APIView): 
     permission_classes = [IsAuthenticated]
 
@@ -345,11 +351,11 @@ class GoalsSavingListCreateView(generics.ListCreateAPIView):
         return GoalsSaving.objects.filter(bank_account__user=self.request.user)
 
     def perform_create(self, serializer):
-        # Associa il bank_account dell'utente loggato
         bank_account = self.request.user.bankaccount_set.first()
         if not bank_account:
             raise ValidationError("Nessun conto associato all'utente.")
         serializer.save(bank_account=bank_account)
+
 
 class GoalsSavingDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GoalsSavingSerializer
@@ -358,8 +364,6 @@ class GoalsSavingDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return GoalsSaving.objects.filter(bank_account__user=self.request.user)
     
-
-from decimal import Decimal
 
 class GoalsSavingAddMoneyView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -377,7 +381,6 @@ class GoalsSavingAddMoneyView(APIView):
             return Response({'detail': 'Importo richiesto.'}, status=400)
 
         try:
-            # Usa Decimal invece di float per evitare problemi di precisione
             importo = Decimal(str(importo))
         except (ValueError, TypeError):
             return Response({'detail': 'Importo non valido.'}, status=400)
@@ -385,19 +388,15 @@ class GoalsSavingAddMoneyView(APIView):
         if importo <= 0:
             return Response({'detail': 'Importo deve essere positivo.'}, status=400)
 
-        # Log per debug
         logger.info(f"Versamento di {importo} per goal {goal.id} ({goal.nome})")
         logger.info(f"Importo attuale prima del versamento: {goal.importo_attuale}")
 
-        # Usa il metodo del modello per gestire il versamento
         try:
             with transaction.atomic():
                 movimento = goal.aggiungi_versamento(importo, descrizione)
 
-                # Log per debug
                 logger.info(f"Importo attuale dopo il versamento: {goal.importo_attuale}")
 
-                # Ricarica il goal dal database per assicurarsi che i dati siano aggiornati
                 goal.refresh_from_db()
 
                 return Response({

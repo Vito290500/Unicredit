@@ -1,5 +1,5 @@
 """
-Helper for pagination
+Helper per la paginazione 
 """
 
 from rest_framework.pagination import PageNumberPagination

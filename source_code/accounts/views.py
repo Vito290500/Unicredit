@@ -1,23 +1,32 @@
 """
-Views customization for accounts app
+Configurazione per le api dell'account app
 """
+import uuid
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import RetrieveUpdateAPIView
-from .models import Accounts, Contact, Accredito
-from .serializers import AccountWithProfileSerializer, ContactSerializer, AccreditoSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status, viewsets
+
+from users.models import User
+from transactions.pagination import TransactionPageNumberPagination
+from .models import (
+    Accounts,
+    Contact,
+    Accredito
+)
+from .serializers import (
+    AccountWithProfileSerializer,
+    ContactSerializer,
+    AccreditoSerializer
+)
 from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 from django.core.mail import send_mail
-from users.models import User
-import uuid
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework import viewsets
-from transactions.pagination import TransactionPageNumberPagination
+
 
 class MyAccountView(RetrieveUpdateAPIView):
-    """Api for retrive and update my account data."""
+    """Api per il retrive e update dei dati dell'account."""
     serializer_class = AccountWithProfileSerializer
     permission_classes =[IsAuthenticated]
 
@@ -76,6 +85,7 @@ class ContactDeleteView(APIView):
             return Response({'detail': 'Contatto non trovato.'}, status=status.HTTP_404_NOT_FOUND)
 
 class AccreditoViewSet(viewsets.ReadOnlyModelViewSet):
+    """Api per la l'accredito."""
     serializer_class = AccreditoSerializer
     permission_classes = [IsAuthenticated]
     ordering_fields = ['created_at', 'date', 'amount', 'source', 'currency']

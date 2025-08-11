@@ -91,6 +91,15 @@ function filterAndRender() {
 function renderTransazioniTable(transazioni, page) {
   const tbody = document.getElementById('transazioni-tbody');
   tbody.innerHTML = '';
+
+  if (transazioni.length === 0) {
+    const paraph = document.createElement('p');
+    paraph.textContent = 'Nessuna transazione trovata';
+    paraph.classList.add('placeholder_msg');
+    tbody.appendChild(paraph);
+    return;
+  }
+
   const startIdx = (page - 1) * PAGE_SIZE;
   const endIdx = Math.min(startIdx + PAGE_SIZE, transazioni.length);
   for (let i = startIdx; i < endIdx; i++) {

@@ -15,16 +15,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const Name = document.getElementById('full_name');
         const PlaceDateBirth = document.getElementById('place_date_birth');
+        const Status = document.getElementById('status_account');
 
-        Name.textContent = data.profile.full_name;
-        PlaceDateBirth.textContent = 'Nato a ' + data.profile.city + ' il ' + data.profile.birth_date ;
+        // Set full name or placeholder
+        if (data.profile && data.profile.full_name) {
+            Name.textContent = data.profile.full_name;
+        } else {
+            Name.textContent = 'Nome utente';
+        }
 
+        // Set place and date of birth or placeholder
+        if (data.profile && data.profile.city && data.profile.birth_date) {
+            PlaceDateBirth.textContent = 'Nato a ' + data.profile.city + ' il ' + data.profile.birth_date;
+        } else {
+            PlaceDateBirth.textContent = 'Luogo o data di nascita';
+        }
 
-        const iso = data.created_at;               
-        const dateOnly = iso.split('T')[0];        
-        const Status = document.getElementById('status_account')
-
-        Status.textContent = 'Verificato - attivo dal ' + dateOnly;
+        // Set account status or placeholder
+        if (data.created_at) {
+            const iso = data.created_at;
+            const dateOnly = iso.split('T')[0];
+            Status.textContent = 'Verificato - attivo dal ' + dateOnly;
+        } else {
+            Status.textContent = 'Stato account';
+        }
 
         
     } catch (err) {

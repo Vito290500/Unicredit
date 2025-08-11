@@ -11,8 +11,7 @@
     <link rel="stylesheet" href="{% static 'css/componenti.css' %}">
     <link rel="stylesheet" href="{% static 'css/profile_section/profile.css' %}">
 
-    <!-- JS IMPORT -->
-    <script src="{% static 'js/navbar.js' %}"></script>
+
 </head>
 <body>
     {% include 'components/navbar.html' %}
@@ -65,7 +64,7 @@
                     <h3>Dati personali</h3>
                 </div>
                
-                <p class="text-explain">Qui trovi i dati personali associato al tuo account:<span>dati anagrafici, indirizzi, contatti.</span></p>
+                <p class="text-explain">Qui trovi i dati personali associato al tuo account: <span>dati anagrafici, indirizzi, contatti.</span></p>
 
                 <div class="button-container" style="justify-content: space-between;">
                     <p class="updated-data">Ultimo aggiornamento: 04/07/2025</p>
@@ -154,5 +153,6 @@
     </footer>
       
     <script src="{% static 'js/profile_section/profile.js' %}"></script> 
+    <script src="{% static 'js/navbar.js' %}"></script>
 </body>
 </html>

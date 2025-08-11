@@ -97,6 +97,15 @@ function filterMovimenti(movimenti, search, categories) {
 function renderMovimentiTable(movimenti, page) {
   const tbody = document.getElementById('movimenti-tbody');
   tbody.innerHTML = '';
+
+  if (movimenti.length === 0) {
+    const paraph = document.createElement('p');
+    paraph.textContent = 'Nessun movimento trovato';
+    paraph.classList.add('placeholder_msg');
+    tbody.appendChild(paraph);
+    return;
+  }
+
   const totalCount = movimenti.length;
   const startIdx = (page - 1) * PAGE_SIZE;
   const endIdx = Math.min(startIdx + PAGE_SIZE, totalCount);

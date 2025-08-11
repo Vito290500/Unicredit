@@ -239,3 +239,8 @@ body{
   flex: 2 1 200px;
   min-width: 120px;
 }
+
+
+#transazioni-tbody{
+  height: 226px;
+}

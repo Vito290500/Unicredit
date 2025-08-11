@@ -111,6 +111,16 @@ function filterEstratti(estratti, search) {
 function renderEstrattiTable(estratti, page) {
   const tbody = document.getElementById('estratti-tbody');
   tbody.innerHTML = '';
+
+  if (estratti.length === 0) {
+    const paraph = document.createElement('p');
+    paraph.textContent = 'Nessun estratto conto trovato';
+    paraph.classList.add('placeholder_msg');
+
+    tbody.appendChild(paraph);
+    return;
+  }
+
   const totalCount = estratti.length;
   const startIdx = (page - 1) * ESTRATTI_PAGE_SIZE;
   const endIdx = Math.min(startIdx + ESTRATTI_PAGE_SIZE, totalCount);

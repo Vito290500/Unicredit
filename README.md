@@ -1,79 +1,176 @@
-FINHUB CREDIT BANK - PLATFORM
+# FINHUB CREDIT BANK – PLATFORM
 
-Per una corretto avvio del progetto ci sono alcuni passaggi importanti da seguire:
+Applicazione **full-stack API-based** per il settore finanziario: gestione conti, bonifici interni, goals saving, estratti conto.  
+Progetto per CdS *Informatica per le Aziende Digitali (L-31)*.
 
-1. Istallazione della cartella in formato zip presente sul link del progetto. 
-2. Installazione ultima versione di docker:
+---
 
-NOTA BENE:
-l'ultima versione di docker potrebbe richiedere l'aggiornamento del WSL(Sottosistema Windows per Linux), 
-non server installarlo prima di docker, una volta completata l'installazione di docker e fatto il primo avvio 
-sarà lui stesso a richiederlo, qualora non venisse richiesto l'installazione è andata a buon fine e potete 
-saltare questo passaggio altrimenti se richiesto per aggiornare il WSL basta semplicemente aprire powershell 
-eseguendolo con i permessi di amministratore e poi runnare questo comando:
+## Requisiti
 
-- wsl --update 
+- **Docker Desktop** (ultima versione).  
+- **Git** (facoltativo, se cloni la repo).  
+- **Visual Studio Code** (consigliato).  
+- **Windows**: supporto **WSL2**. Se Docker lo richiede, apri **PowerShell come amministratore** ed esegui:
+  ```powershell
+  wsl --update
+  ```
 
-una volta terminato aprite docker e dovreste vedere la home dell'applicazione.
+> **Nota**: questa versione invia **email reali** per l’attivazione account. Consigliata una mail **Gmail** per i test.
+> In alternativa puoi attivare manualmente via **admin** (vedi sotto).
 
-3. Aprite la cartella del progetto con visual studio code(se non ce l'avete si consiglia di scaricarlo) e
-aprite un nuovo terminale direttamente su visual code e runnate il seguente comando:
+---
 
-- docker-compose build
+## Installazione
 
-il comando ci impiegherà diverso tempo poichè costruirà l'immagine con tutte le dipendenze necessarie al
-progetto e una volta terminato vedrete una scritta di successo "done" 
+1. **Ottieni i sorgenti**
+   - Clona la repo oppure **scarica lo ZIP** del progetto ed estrailo (cartella `source_code/`).
 
-4. Successivamente runnate i seguenti comando:
+2. **Costruisci le immagini Docker**
+   ```bash
+   docker-compose build
+   ```
+   Attendi la fine del build (comparirà “done”).
 
-- docker-compose up -d 
+3. **Avvia i container**
+   ```bash
+   docker-compose up -d
+   ```
 
-- docker-compose exec web python manage.py createsuperuser 
+4. **Crea un superuser (admin)**
+   ```bash
+   docker-compose exec web python manage.py createsuperuser
+   ```
+   Inserisci **email** e **password** (servono per entrare in `/admin`).
 
-Questo comando vi richiederà di inserire email e password per la creazione di un utente con privilegi 
-di admin (questo comando è importante in quanto vi consentirà di accedere alla sezione admin), potete
-tranquillamente inventare email e password servono solo per accedere alla sezione admin. (si consiglia
-vivamente di segnare le credenziali inserite, perchè serivanno più avanti)
+5. **Avvio interattivo (log in console)**
+   ```bash
+   docker-compose up
+   ```
 
-- docker-compose up
+---
 
-una volta fatto potrete aprire il browser e navigare al link del progetto "localhost:8000"
+## URL principali
 
-5. Vedrete la sezione login, dovrete prima cliccare su registrati per poter creare l'account.
+- Applicazione (frontend) → http://localhost:8000  
+- Admin Django → http://localhost:8000/admin  
+- Swagger UI → http://localhost:8000/docs  
+- ReDoc → http://localhost:8000/redoc  
 
-NOTA BENE: al fine di riuscire a visualizzare correttamente tutte le funzionalità della piattaforma 
-è consigliato la creazione di due account diversi purchè almeno il primo è creato con un email reale 
-di cui avete accesso al fine di visionare il sistema di registrazione.
+---
 
-Il sistema di registrazione invia in automatico un email all'email inserita (funziona perfettamente con 
-email gmail per questa versione, con gli altri tipi di domini potrebbe non funzionare correttamente quindi 
-si consiglia di usare gmail). All'interno dell'email ricevuta ci sarà un pulsante che vi renderizzerà ad 
-un link sicuro grazie all'utilizzo del Token Jwt di accesso e cliccando verrà attivato l'account. 
+## Creazione e attivazione utenti (necessari **2 account**)
 
-Se per qualisasi motivo non dovesse arrivarvi nessuna email controllate nella sezione spam, altrimenti 
-inserite questo link "localhost:8000/admin" e vi comparirà la sezione di accesso all'area admin, inserite la 
-vostra email e password inserita durante la creazione del superuser con il comando di prima citato. 
+Per testare i **bonifici** servono **almeno due utenti** distinti (`Utente A` e `Utente B`).
 
-Una volta all'interno dell'admin per attivare manualmente l'account basta cliccare su users in basso a sinistra,
-poi cliccare sull'email da attivare e poi spuntare il checkbutton "is_active" e cliccare su "save" e ora potete 
-accedere alla piattaforma.
+### A) Registrazione via interfaccia (consigliato)
+1. Vai su **http://localhost:8000** → **Registrati** e crea **Utente A** (email reale consigliata).
+2. Controlla la mail di attivazione (anche **Spam**): clicca sul link per **attivare** l’account.
+3. Ripeti i passaggi per creare e attivare **Utente B**.
 
-6. Dopo aver creato i due account, nella sezione admin cliccando su bank account e su ciascuno dei due inserite
-delle cifre fittizie al balance che di default è 0 in modo da poter visionare il funzionamento del bonifico, dove
-vi servirà sempre la sezione admin per utilizzare le coordinate corrette per il bonifico sempre visibile nella tabella
-back account o accounts.
+### B) Attivazione manuale (alternativa se la mail non arriva)
+1. Entra su **/admin** con le credenziali del **superuser**.
+2. Vai su **Users** → seleziona l’utente → spunta **is_active** → **Save**.
+3. Ripeti per il secondo utente.
 
-Una volta eseguiti correttamente tutti questi passaggi potete visionare tranquillamente l'intera piattaforma e 
-utilizzare le funzionalità implementate. 
+---
 
+## Impostazione saldi iniziali (per provare i bonifici)
 
+1. Vai su **/admin** → **Bank accounts**.  
+2. Apri il conto di **Utente A** e imposta un **balance** (es. `1000.00`). **Save**.  
+3. Apri il conto di **Utente B** e imposta un **balance** di test (es. `500.00`). **Save**.  
+4. Annota gli **IBAN** dei due conti (sono visibili in **Bank accounts** o in **Accounts**).
 
+> Suggerimento: tieni a portata di mano l’IBAN di **Utente B** per fare il bonifico da A → B.
 
+---
 
+## Test rapido (end-to-end)
 
+1. **Login** come **Utente A** (http://localhost:8000).  
+2. Vai alla pagina **Bonifico/Trasferimento**.  
+3. Inserisci:
+   - **IBAN destinatario** = IBAN di **Utente B**  
+   - **Importo** = un valore **inferiore** al saldo di A (es. `50.00`)  
+   - **PIN** del conto (coerente con quanto indicato nel tuo setup)  
+   - **Descrizione** / **Categoria** (facoltativi)
+4. Conferma il bonifico.  
+5. **Risultato atteso**:
+   - Transazione **Completata**  
+   - Saldo **Utente A** decrementato di `importo`  
+   - Saldo **Utente B** incrementato di `importo`  
+   - In **/admin → Transactions** compaiono **due movimenti** speculari:
+     - A: movimento **in uscita** (importo **negativo**)  
+     - B: movimento **in entrata** (importo **positivo**)
 
+---
 
+## Funzionalità principali
 
+- **Registrazione** e **attivazione** account (email).  
+- **Login JWT** (stateless).  
+- **Gestione conti** (visibilità solo dei conti del proprio utente).  
+- **Bonifico interno** con validazioni: saldo sufficiente, PIN, IBAN interno; esecuzione **atomica** con doppia scrittura movimenti e aggiornamento saldi.  
+- **Rubrica/beneficiari** (se prevista nella tua build).  
+- **Goals Saving**: creazione obiettivi, versamenti dedicati, avanzamento percentuale.  
+- **Estratti conto mensili** e **PDF**.
 
+---
 
+## Documentazione API
 
+- Swagger UI → http://localhost:8000/docs  
+- ReDoc → http://localhost:8000/redoc  
+- Schema OpenAPI allegato in `docs/` (sezione “Documentazione” del progetto).
+
+---
+
+## Screenshots
+
+Gli screenshot dei flussi principali sono disponibili in:  
+```
+docs/screenshots/
+```
+Nel report sono inclusi 2–3 screenshot chiave; l’elenco completo è in questa cartella.
+
+---
+
+## Comandi utili
+
+- **Migrazioni DB**
+  ```bash
+  docker-compose exec web python manage.py makemigrations
+  docker-compose exec web python manage.py migrate
+  ```
+- **Creazione superuser**
+  ```bash
+  docker-compose exec web python manage.py createsuperuser
+  ```
+- **Ricostruzione immagini**
+  ```bash
+  docker-compose build
+  ```
+- **Avvio / Arresto**
+  ```bash
+  docker-compose up -d
+  docker-compose down
+  ```
+
+---
+
+## Troubleshooting
+
+- **Docker chiede WSL su Windows** → esegui `wsl --update` in PowerShell come amministratore.  
+- **La mail non arriva** → verifica **Spam**. In alternativa attiva l’utente da **/admin** (flag **is_active**).  
+- **Errore porta occupata (8000)** → chiudi altri servizi o cambia mappatura porte in `docker-compose.yml`.  
+- **Saldo insufficiente / PIN errato** → controlla in **/admin**:
+  - *Bank accounts* → `balance` del mittente > `importo`  
+  - PIN del conto mittente coerente con quello richiesto dal form  
+- **Schema API** non aggiornato → rigenera da progetto e verifica `/docs`.
+
+---
+
+## Note
+
+- Dati, credenziali e importi nel presente progetto sono **di test** e **non** collegati a circuiti bancari reali.
+- Il codice è strutturato in ottica **didattica** con pattern REST, validazioni lato serializer e transazioni **ACID**.
